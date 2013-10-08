@@ -321,6 +321,10 @@ XXX structs define a single binding
 XXX optional fields
 XXX struct in interface is used for restricting access to pieces of structures
 
+XXX using struct transformers like this (and similar ones for other
+types) give you access to more efficient generic operations, methods,
+etc, and encourages you to write "typed" programs.
+
 @section{Classes and Objects}
 
 I'm tempted to say that Generics in R1 is a failure of the class
