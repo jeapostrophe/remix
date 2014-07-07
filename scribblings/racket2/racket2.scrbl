@@ -96,6 +96,8 @@ build on existing macro technology. Now that we have discovered Honu,
 we must push it to develop a new kind of extensible compiler
 front-end.
 
+XXX identifier freedom with forced whitespace
+
 @emph{Why @"@"?} R1 has taught us the importance of embedding prose in
 programs. By including the @"@"-reader at all times, we make it easier
 to embed prose.
@@ -180,6 +182,8 @@ sources of interfaces with different choices (i.e. a program needs
 default, but the context of the application changes it to be provided
 by a version of the list modules that optimizes @racket[snoc] and
 @racket[append].)
+
+XXX algebra of interfaces (combine, extend, cut, contract, etc)
 
 @subsection{Procedure Expressions, Local Binding, Local Definition, Definitions, and Assignments}
 
@@ -325,6 +329,8 @@ XXX using struct transformers like this (and similar ones for other
 types) give you access to more efficient generic operations, methods,
 etc, and encourages you to write "typed" programs.
 
+XXX seals as a more fundamental feature?
+
 @section{Classes and Objects}
 
 I'm tempted to say that Generics in R1 is a failure of the class
@@ -354,3 +360,5 @@ posn implements {
 }
 
 }|
+
+XXX generics for stuff like string? via the same mechanism?
