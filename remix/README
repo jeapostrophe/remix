@@ -1,0 +1,74 @@
+- No effects or expressions at top-level
+- "Versioned" libraries
+- No set! (use data-structure mutation and :=)
+- Make macros less weird and more like programs, by...
+- Unified matching (syntax-parse/match/etc)
+- Unified templates (syntax, quasiquote, etc)
+
+  If x is a list, then...
+
+  (template (list (~seq 1 ,x) ...))
+  =>
+  (append-map (lambda (x) (list 1 x)) x)
+
+  (template (syntax a ,x ... c))
+  =>
+  (syntax-cons a (syntax-append x (syntax c)))
+
+  (template (+ (f ,x) ...))
+  =>
+  (apply + (map f x))
+
+- @ everywhere
+- Pattern matching everywhere
+- New structs (more reflective information, representation control, sealing)
+- Implicit units and interfaces (with properties)
+- Bare-bones /base
+
+#lang racket/base
+(define BASE-NAMES (namespace-mapped-symbols (make-base-namespace)))
+(for ([i (in-list BASE-NAMES)])
+  (displayln i))
+(displayln (length BASE-NAMES))
+
+returns 1433
+
+- Generics everywhere
+- Non-() syntax "mode"
+
+array.[{1 + 1}].(foo)
+->
+(#%dot array (#%brackets (+ 1 1)) (foo))
+
+(define (foo (var x) (~opt y 17) (posn p))
+ {x := z + 13}
+ {p.x + p.y})
+
+- Implicit nesting in blocks
+  
+  (def (f x)
+   (def y 17)
+   (+ x y))
+
+- Immutable strings only
+- Remove letrec weirdness of define?
+- "define"-transformers for attaching meta-information to definitions, like documentation, tests, contracts, types, etc
+- Bindings & keywords everywhere
+- Less representation contraints
+- Meaningless eq? semantics
+- Literate programming and inline docs easily
+- No case-lambda
+- Optional traditional numbers (num/generic => +)
+- Optional non-coercing number tower (num/{fl,fx,i32,i64,f32,f64,nat,int,rational,real})
+-- with maybe impl (num/*/maybe)
+-- with overflow errors impl (num/*/exn)
+-- with modulo-X impl (num/*/modulo)
+-- with modulo-X & carry impl (num/*/carry)
+- More unicode!
+- Unboxed, raw data
+- Remove multiple values?
+- Rocket-strength super cut:
+
+  λ.(+ $0 $1)
+
+- Don't use English in exceptions and have more structured exns
