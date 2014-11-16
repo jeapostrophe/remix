@@ -1,6 +1,56 @@
-- No effects or expressions at top-level
-- "Versioned" libraries
+- @ everywhere
+
+- {} infix
+
+- [] particular => (#%brackets )
+
+- . in ids => x.y => (%#dot x y)
+
+(struct posn ((complex x) y))
+
+(define (f (posn p))
+ p.x.real-part)
+
+p.x.real-part
+(#%dot (#%dot p x) real-part)
+(let ([(complex tmp) (posn-x p)])
+ (#%dot tmp real-part))
+
+(define (from-origin x) : posn
+  (posn x x))
+
+(from-orign 5).x
+
+(begin a (from-origin 5)).x
+
+obj.(move 5 6)
+
+(define (f (cons x y))
+ stuff)
+(define (f (a-cons p))
+ stuff)
+
+(define (f [: b box])
+ stuff)
+(define (f box.b)
+ stuff)
+(define (f (box x))
+ stuff)
+
+- robby's request
+(haskell-style
+ (f '()) = 0
+ (f (cons x l)) = {1+ (f l)})
+
+
+
 - No set! (use data-structure mutation and :=)
+
+(def (var x) 5)
+{x := 6}
+
+- No effects or expressions at top-level (controversial, mf says wrong) [set-once!]
+- "Versioned" libraries
 - Make macros less weird and more like programs, by...
 - Unified matching (syntax-parse/match/etc)
 - Unified templates (syntax, quasiquote, etc)
@@ -19,7 +69,6 @@
   =>
   (apply + (map f x))
 
-- @ everywhere
 - Pattern matching everywhere
 - New structs (more reflective information, representation control, sealing)
 - Implicit units and interfaces (with properties)
@@ -34,6 +83,7 @@
 returns 1433
 
 - Generics everywhere
+https://github.com/stamourv/generic-collections
 - Non-() syntax "mode"
 
 array.[{1 + 1}].(foo)
@@ -52,6 +102,12 @@ array.[{1 + 1}].(foo)
 
 - Immutable strings only
 - Remove letrec weirdness of define?
+
+(def (f x)
+ (def [even (λ (x) (odd x))]
+      [odd (λ (x) (even x))])
+ (even x))
+
 - "define"-transformers for attaching meta-information to definitions, like documentation, tests, contracts, types, etc
 - Bindings & keywords everywhere
 - Less representation contraints
@@ -71,4 +127,9 @@ array.[{1 + 1}].(foo)
 
   λ.(+ $0 $1)
 
-- Don't use English in exceptions and have more structured exns
+- Don't use English in exceptions and have more structured exns [demo on raco/pkg]
+
+- (Define-default-type Number x y z)
+  [for define things too]
+
+- zos don't appear to users (switch to interp if no write access)
