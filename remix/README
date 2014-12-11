@@ -133,3 +133,5 @@ array.[{1 + 1}].(foo)
   [for define things too]
 
 - zos don't appear to users (switch to interp if no write access)
+
+- (define+ (f case) body)
