@@ -50,4 +50,6 @@
    ["(a b).c" (#%dot (a b) c)]
    ["(a b).(c d)" (#%dot (a b) (c d))]
    ["(a b).[3]" (#%dot (a b) (#%brackets 3))]
-   ["({1})" ((#%braces 1))]))
+   ["({1})" ((#%braces 1))]
+   ["remix/stx.0" (#%dot remix/stx 0)]
+   ["(require remix/stx.0)" (require (#%dot remix/stx 0))]))

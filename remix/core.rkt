@@ -1,2 +1,4 @@
 #lang racket/base
-(provide #%module-begin)
+(provide #%module-begin
+         require
+         provide)

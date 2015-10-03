@@ -1,10 +1,16 @@
-- @ everywhere
+TODO @ everywhere
 
-- {} infix
+DONE {} particular => (#%braces)
 
-- [] particular => (#%brackets )
+TODO {} infix
 
-- . in ids => x.y => (%#dot x y)
+DONE [] particular => (#%brackets)
+
+DONE default #%brackets is (let () ....)
+
+DONE . in ids => x.y => (%#dot x y)
+
+TODO #%dot is extensible transformer
 
 (struct posn ((complex x) y))
 
@@ -37,23 +43,28 @@ obj.(move 5 6)
 (define (f (box x))
  stuff)
 
-- robby's request
+TODO robby's request
+
 (haskell-style
  (f '()) = 0
  (f (cons x l)) = {1+ (f l)})
 
+TODO (define+ (f case) body)
 
-
-- No set! (use data-structure mutation and :=)
+TODO No set! (use data-structure mutation and :=)
 
 (def (var x) 5)
 {x := 6}
 
-- No effects or expressions at top-level (controversial, mf says wrong) [set-once!]
-- "Versioned" libraries
-- Make macros less weird and more like programs, by...
-- Unified matching (syntax-parse/match/etc)
-- Unified templates (syntax, quasiquote, etc)
+TODO No effects or expressions at top-level (controversial, mf says wrong) [set-once!]
+
+TODO "Versioned" libraries
+
+TODO Make macros less weird and more like programs, by...
+
+TODO Unified matching (syntax-parse/match/etc)
+
+TODO Unified templates (syntax, quasiquote, etc)
 
   If x is a list, then...
 
@@ -69,10 +80,13 @@ obj.(move 5 6)
   =>
   (apply + (map f x))
 
-- Pattern matching everywhere
-- New structs (more reflective information, representation control, sealing)
-- Implicit units and interfaces (with properties)
-- Bare-bones /base
+TODO Pattern matching everywhere
+
+TODO New structs (more reflective information, representation control, sealing)
+
+TODO Implicit units and interfaces (with properties)
+
+DONE Bare-bones /base
 
 #lang racket/base
 (define BASE-NAMES (namespace-mapped-symbols (make-base-namespace)))
@@ -82,9 +96,10 @@ obj.(move 5 6)
 
 returns 1433
 
-- Generics everywhere
+TODO Generics everywhere
 https://github.com/stamourv/generic-collections
-- Non-() syntax "mode"
+
+TODO Non-() syntax "mode"
 
 array.[{1 + 1}].(foo)
 ->
@@ -94,44 +109,56 @@ array.[{1 + 1}].(foo)
  {x := z + 13}
  {p.x + p.y})
 
-- Implicit nesting in blocks
+DONE Implicit nesting in blocks
   
   (def (f x)
    (def y 17)
    (+ x y))
 
-- Immutable strings only
-- Remove letrec weirdness of define?
+TODO Immutable strings only
+
+TODO Remove letrec weirdness of define?
 
 (def (f x)
  (def [even (λ (x) (odd x))]
       [odd (λ (x) (even x))])
  (even x))
 
-- "define"-transformers for attaching meta-information to definitions, like documentation, tests, contracts, types, etc
-- Bindings & keywords everywhere
-- Less representation contraints
-- Meaningless eq? semantics
-- Literate programming and inline docs easily
-- No case-lambda
-- Optional traditional numbers (num/generic => +)
-- Optional non-coercing number tower (num/{fl,fx,i32,i64,f32,f64,nat,int,rational,real})
--- with maybe impl (num/*/maybe)
--- with overflow errors impl (num/*/exn)
--- with modulo-X impl (num/*/modulo)
--- with modulo-X & carry impl (num/*/carry)
-- More unicode!
-- Unboxed, raw data
-- Remove multiple values?
-- Rocket-strength super cut:
+TODO "define"-transformers for attaching meta-information to definitions, like documentation, tests, contracts, types, etc
+
+TODO Bindings & keywords everywhere
+---- DONE cond
+
+TODO Less representation contraints
+
+TODO Meaningless eq? semantics
+
+TODO Literate programming and inline docs easily
+
+DONE No case-lambda
+
+TODO Optional traditional numbers (num/generic => +)
+
+TODO Optional non-coercing number tower (num/{fl,fx,i32,i64,f32,f64,nat,int,rational,real})
+---- TODO with maybe impl (num/*/maybe)
+---- TODO with overflow errors impl (num/*/exn)
+---- TODO with modulo-X impl (num/*/modulo)
+---- TODO with modulo-X & carry impl (num/*/carry)
+
+TODO More unicode!
+
+TODO Unboxed, raw data
+
+TODO Remove multiple values?
+
+TODO Rocket-strength super cut:
 
   λ.(+ $0 $1)
 
-- Don't use English in exceptions and have more structured exns [demo on raco/pkg]
+TODO Don't use English in exceptions and have more structured exns [demo on raco/pkg]
 
-- (Define-default-type Number x y z)
+TODO (Define-default-type Number x y z)
   [for define things too]
 
-- zos don't appear to users (switch to interp if no write access)
+TODO zos don't appear to users (switch to interp if no write access)
 
-- (define+ (f case) body)
