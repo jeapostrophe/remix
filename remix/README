@@ -1,4 +1,6 @@
-TODO @ everywhere
+DONE @ everywhere
+
+DONE demonstrate how @ everywhere enables non-() macros like datalog
 
 DONE {} particular => (#%braces)
 
