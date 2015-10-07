@@ -4,7 +4,7 @@ DONE demonstrate how @ everywhere enables non-() macros like datalog
 
 DONE {} particular => (#%braces)
 
-TODO {} infix
+DONE {} infix
 
 DONE [] particular => (#%brackets)
 
@@ -60,7 +60,7 @@ TODO No set! (use data-structure mutation and :=)
 
 TODO No effects or expressions at top-level (controversial, mf says wrong) [set-once!]
 
-TODO "Versioned" libraries
+DONE "Versioned" libraries
 
 TODO Make macros less weird and more like programs, by...
 
