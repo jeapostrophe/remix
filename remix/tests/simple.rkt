@@ -1,4 +1,7 @@
 #lang remix
+;; This requires changes to Racket that are not yet pushed, but will
+;; be once the release branch is made.
+
 (require remix/stx0
          remix/num/gen0)
 
