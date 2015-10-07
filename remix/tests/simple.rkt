@@ -63,7 +63,8 @@
   v7)
 
 ;; {} use C's precedence and considers the things you expect to be
-;; operators
+;; operators. there's a syntax-time struct property that allows you to
+;; specify what you want the precedence of an operator to be.
 (def v-26
   {2 * 3 - 48 / 4 - 4 * 5})
 (module+ test
