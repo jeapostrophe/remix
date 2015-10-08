@@ -142,4 +142,5 @@
          unquote
          module
          module*
-         module+)
+         module+
+         provide)

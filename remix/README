@@ -157,10 +157,16 @@ TODO Rocket-strength super cut:
 
   λ.(+ $0 $1)
 
-TODO Don't use English in exceptions and have more structured exns [demo on raco/pkg]
+TODO Don't use English in exceptions and have more structured exns
+[demo on raco/pkg]
+
+english in error messages is good, but adding a markup language instead of just supporting strings
 
 TODO (Define-default-type Number x y z)
   [for define things too]
 
 TODO zos don't appear to users (switch to interp if no write access)
 
+TODO only use syntax-parse and define-simple-macro
+
+TODO add a threading macro
