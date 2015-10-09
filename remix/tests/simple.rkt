@@ -113,6 +113,12 @@
 (module+ test
   v9)
 
+;; λ is a dot-transformer for cut
+(def v11
+  (λ.(+ 10 1)))
+(module+ test
+  v11)
+
 ;; ...
 ;; ,,,
 ;; ooo

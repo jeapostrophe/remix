@@ -3,6 +3,7 @@
                      racket/list
                      racket/match
                      racket/generic
+                     racket/syntax
                      syntax/parse))
 
 (define-syntax (def stx)
@@ -21,23 +22,30 @@
      (syntax/loc stx
        (let () . body))]))
 
-;; xxx also make it a #%dot transformer that is cut.
-(define-syntax (remix-λ stx)
-  (syntax-parse stx
-    ;; xxx transform args into bind plus what racket λ needs
-    [(_ (arg:id ...) . body:expr)
-     (syntax/loc stx
-       (λ (arg ...) (remix-block . body)))]))
-
 (define-syntax (#%brackets stx)
   (syntax-parse stx
     [(_ . body:expr)
      (syntax/loc stx
        (remix-block . body))]))
 
+(define-syntax-rule
+  (define-define-singleton-struct define-singleton-struct define inner-begin)
+  (define-syntax (define-singleton-struct stx)
+    (syntax-parse stx
+      [(define-singleton-struct singleton:id . struct-args)
+       (with-syntax ([the-singleton (generate-temporary #'singleton)])
+         (syntax/loc stx
+           (begin (inner-begin (struct the-singleton () . struct-args))
+                  (define singleton (the-singleton)))))])))
+
+(define-define-singleton-struct define/singleton-struct
+  define begin)
+(define-define-singleton-struct define-syntax/singleton-struct
+  define-syntax begin-for-syntax)
+
 (begin-for-syntax
   (define-generics binary-operator
-    [binary-operator-precedence binary-operator])
+    (binary-operator-precedence binary-operator))
   (define (operator-chars? s)
     (not
      (ormap (λ (c) (or (char-alphabetic? c)
@@ -109,8 +117,40 @@
       empty
       empty)]))
 
+(begin-for-syntax
+  (define-generics dot-transformer
+    (dot-transform dot-transformer stx)))
 (define-syntax (#%dot stx)
-  (syntax-parse stx))
+  (syntax-parse stx
+    #:literals (#%dot)
+    [(_ x:expr ... (#%dot y:expr ...))
+     (syntax/loc stx
+       (#%dot x ... y ...))]
+    [(_ dt . more:expr)
+     #:declare dt (static dot-transformer? "dot transformer")
+     (dot-transform (attribute dt.value) stx)]))
+
+(define-syntax/singleton-struct remix-λ
+  #:property prop:procedure
+  (λ (_ stx)
+    (syntax-parse stx
+      ;; xxx transform args into bind plus what racket λ needs
+      [(_ (arg:id ...) . body:expr)
+       (syntax/loc stx
+         (λ (arg ...) (remix-block . body)))]))
+  #:methods gen:dot-transformer
+  [(define (dot-transform _ stx)
+     (syntax-parse stx
+       [(_#%dot _λ body:expr)
+        (syntax/loc stx
+          (remix-cut body))]))])
+
+;; xxx actually implement cut
+(define-syntax (remix-cut stx)
+  (syntax-parse stx
+    [(_ body:expr)
+     (syntax/loc stx
+       (remix-λ () body))]))
 
 (define-syntax (remix-cond stx)
   (syntax-parse stx
