@@ -22,7 +22,8 @@
   x)
 
 ;; but of course def supports function definitions. [] is NOT the same
-;; as () and defaults to expanding to a block definition
+;; as (), it parses as #%brackets and defaults to expanding to a block
+;; definition
 (def (f x y)
   (+ [(def z (+ x x))
       z]
@@ -59,7 +60,8 @@
  path(X, Y)?
 }
 
-;; {} is also not (), but is an infix macro
+;; {} is also not (), it is parsed as #%braces, and by default is an
+;; infix macro
 (def v7
   {3 + 4})
 (module+ test
@@ -119,9 +121,26 @@
 (module+ test
   v11)
 
-;; ...
-;; ,,,
-;; ooo
-;; …
+;; ≙ is a synonym for def, and because of the {} rules, is a binary
+;; operator.
+{v33 ≙ 33}
+(module+ test
+  v33)
 
+(def v28
+  {(f x) ≙ x + x}
+  (f 14))
+(module+ test
+  v28)
 
+;; def* allows nested binding inside blocks
+(def v64
+  (def* x 2)
+  (def* x {x + x})
+  (def* x {x + x})
+  (def* x {x + x})
+  (def* x {x + x})
+  (def* x {x + x})
+  x)
+(module+ test
+  v64)

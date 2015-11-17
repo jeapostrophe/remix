@@ -19,4 +19,4 @@
  (def (draw)
   (circle 'yellow 5)))
 
-(big-bang (new rocket))
+(big-bang (rocket.new))

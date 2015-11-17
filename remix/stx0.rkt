@@ -6,18 +6,39 @@
                      racket/syntax
                      syntax/parse))
 
+;; xxx add extensibility
 (define-syntax (def stx)
   (syntax-parse stx
     [(_ x:id . body:expr)
      (syntax/loc stx
        (define x (remix-block . body)))]
-    [(_ (x:id . args:expr) . body:expr)
+    [(_ (x . args:expr) . body:expr)
      (syntax/loc stx
        (def x (remix-λ args . body)))]))
 
-(define-syntax (remix-block stx)
-  ;; xxx gather up defs and turn into bind
+(define-syntax (def* stx)
+  (raise-syntax-error 'def* "illegal outside of block" stx))
+
+;; xxx add extensibility
+(define-syntax (def*-internal stx)
   (syntax-parse stx
+    [(_ (x:id . def-body:expr) bind-body:expr)
+     (syntax/loc stx
+       (let ([x (remix-block . def-body)])
+         (remix-block . bind-body)))]
+    [(_ ((x . args:expr) . def-body:expr) bind-body:expr)
+     (syntax/loc stx
+       (def*-internal (x (remix-λ args . def-body)) bind-body))]))
+
+(define-syntax (remix-block stx)
+  (syntax-parse stx
+    #:literals (def*)
+    [(_ (~and (~not (def* . _)) before:expr) ...
+        (def* . def*-body:expr) . after:expr)
+     (syntax/loc stx
+       (let ()
+         before ...
+         (def*-internal def*-body after)))]
     [(_ . body:expr)
      (syntax/loc stx
        (let () . body))]))
@@ -143,9 +164,13 @@
      (syntax-parse stx
        [(_#%dot _λ body:expr)
         (syntax/loc stx
-          (remix-cut body))]))])
+          (remix-cut body))]
+       ;; xxx test this
+       [(_#%dot _λ bodies:expr ...)
+        (syntax/loc stx
+          (remix-cut (#%dot bodies ...)))]))])
 
-;; xxx actually implement cut
+;; xxx actually implement cut with _ or $ as the var accessor
 (define-syntax (remix-cut stx)
   (syntax-parse stx
     [(_ body:expr)
@@ -168,7 +193,10 @@
                         (remix-block . answer-body)
                         (remix-cond . more))))]))
 
-(provide def
+(provide def def*
+         ;; xxx add these into the default precedence system
+         (rename-out [def ≙]
+                     [def* ≙*])
          (rename-out [remix-λ λ]
                      [remix-cond cond])
          #%brackets

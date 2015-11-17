@@ -45,6 +45,7 @@
    ["#i1.2 .a" (#%dot 1.2 a)]
    ["1 .2.a" (#%dot 1 (#%dot 2 a))]
    ["a.#i1.2" (#%dot a 1.2)]
+   ;; ((sprite.bbox).ul).x
    ["a.b.c" (#%dot a (#%dot b c))]
    ["a.(b c)" (#%dot a (b c))]
    ["(a b).c" (#%dot (a b) c)]

@@ -101,7 +101,9 @@ returns 1433
 TODO Generics everywhere
 https://github.com/stamourv/generic-collections
 
-TODO Non-() syntax "mode"
+DONE Non-() syntax "mode"
+
+TODO bindings to cooperate with {}
 
 array.[{1 + 1}].(foo)
 ->
@@ -119,7 +121,7 @@ DONE Implicit nesting in blocks
 
 TODO Immutable strings only
 
-TODO Remove letrec weirdness of define?
+DONE Remove letrec weirdness of define?
 
 (def (f x)
  (def [even (λ (x) (odd x))]
@@ -169,4 +171,32 @@ TODO zos don't appear to users (switch to interp if no write access)
 
 TODO only use syntax-parse and define-simple-macro
 
+TODO use \dots as ...
+
 TODO add a threading macro
+
+TODO types and other information in syntax-local-value
+
+TODO support :keyword (and keyword:?)
+
+TODO @literate
+
+TODO @docs
+
+DONE [] for Rec def blocks or def* for let* behavior
+     and Search for def in block and trans to local-def which sees body
+
+TODO [] for def & def* transformer
+
+TODO Meta def & def* trans for more expansion (docs and test), static
+info (types), and def transformers (types), maybe syntax ---
+transformer (can change define to define-syntax/etc) vs expander
+(expands to a different syntax) --- no ability to add args to
+functions!
+
+TODO operator overloading definitions of + and ones that check the
+types for float/int/fixnum/etc
+
+TODO greg's defs
+https://github.com/greghendershott/defn
+https://github.com/greghendershott/def-jambda
