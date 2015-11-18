@@ -116,10 +116,23 @@
   v9)
 
 ;; λ is a dot-transformer for cut
+(def f11
+  λ.(+ 10 1))
 (def v11
-  (λ.(+ 10 1)))
+  (f11))
 (module+ test
   v11)
+
+(def v11b
+  (λ.(+ 10 1)))
+(module+ test
+  v11b)
+
+#;#;
+(def v11c
+  (λ.(+ $ 1) 10))
+(module+ test
+  v11c)
 
 ;; ≙ is a synonym for def, and because of the {} rules, is a binary
 ;; operator.

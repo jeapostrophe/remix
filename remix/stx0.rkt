@@ -4,7 +4,9 @@
                      racket/match
                      racket/generic
                      racket/syntax
-                     syntax/parse))
+                     syntax/parse)
+         syntax/parse/define
+         racket/stxparam)
 
 ;; xxx add extensibility
 (define-syntax (def stx)
@@ -49,20 +51,26 @@
      (syntax/loc stx
        (remix-block . body))]))
 
-(define-syntax-rule
-  (define-define-singleton-struct define-singleton-struct define inner-begin)
-  (define-syntax (define-singleton-struct stx)
+(module singleton racket/base
+  (require (for-syntax racket/base
+                       syntax/parse
+                       racket/syntax))
+  (define-syntax (singleton-struct stx)
     (syntax-parse stx
-      [(define-singleton-struct singleton:id . struct-args)
-       (with-syntax ([the-singleton (generate-temporary #'singleton)])
+      [(singleton-struct . struct-args)
+       (with-syntax ([the-singleton (generate-temporary (syntax-local-name))])
          (syntax/loc stx
-           (begin (inner-begin (struct the-singleton () . struct-args))
-                  (define singleton (the-singleton)))))])))
+           (let ()
+             (struct the-singleton () . struct-args)
+             (the-singleton))))]))
+  (provide singleton-struct))
+(require (submod "." singleton)
+         (for-syntax (submod "." singleton)))
 
-(define-define-singleton-struct define/singleton-struct
-  define begin)
-(define-define-singleton-struct define-syntax/singleton-struct
-  define-syntax begin-for-syntax)
+(define-simple-macro (define/singleton-struct singleton:id . struct-args)
+  (define singleton (singleton-struct . struct-args)))
+(define-simple-macro (define-syntax/singleton-struct singleton:id . struct-args)
+  (define-syntax singleton (singleton-struct . struct-args)))
 
 (begin-for-syntax
   (define-generics binary-operator
@@ -156,6 +164,7 @@
   (λ (_ stx)
     (syntax-parse stx
       ;; xxx transform args into bind plus what racket λ needs
+      ;; xxx no rest args?
       [(_ (arg:id ...) . body:expr)
        (syntax/loc stx
          (λ (arg ...) (remix-block . body)))]))
@@ -171,11 +180,30 @@
           (remix-cut (#%dot bodies ...)))]))])
 
 ;; xxx actually implement cut with _ or $ as the var accessor
+(define-syntax-parameter remix-cut-$
+  (λ (stx)
+    (raise-syntax-error '$ "illegal outside of cut" stx)))
 (define-syntax (remix-cut stx)
   (syntax-parse stx
     [(_ body:expr)
-     (syntax/loc stx
-       (remix-λ () body))]))
+     (let ()
+       (define cut-body-stx
+         (with-syntax ([this-$ (generate-temporary '$)])
+           (syntax/loc stx
+             (let-syntax ([this-$
+                           (λ (stx)
+                             (syntax-parse stx
+                               [$:id
+                                (syntax/loc stx
+                                  0)]))])
+               (syntax-parameterize ([remix-cut-$ (make-rename-transformer #'this-$)])
+                 body)))))
+       (define cut-body-estx
+         (local-expand cut-body-stx 'expression '()))
+       (define this-cut-args
+         '())
+       (quasisyntax/loc stx
+         (remix-λ #,this-cut-args #,cut-body-estx)))]))
 
 (define-syntax (remix-cond stx)
   (syntax-parse stx
@@ -197,7 +225,8 @@
          (rename-out [def ≙]
                      [def* ≙*])
          (rename-out [remix-λ λ]
-                     [remix-cond cond])
+                     [remix-cond cond]
+                     [remix-cut-$ $])
          #%brackets
          #%braces
          (for-syntax gen:binary-operator
