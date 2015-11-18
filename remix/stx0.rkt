@@ -80,7 +80,7 @@
             '+ 40 '- 40
             '< 60 '<= 60
             '> 60 '>= 60
-            '= 70))
+            '= 70 '≙ 70 '≙* 70))
   (define (shunting-yard:precendence op)
     (define v (syntax-local-value op (λ () #f)))
     (or (and v (binary-operator? v) (binary-operator-precedence v))
@@ -194,7 +194,6 @@
                         (remix-cond . more))))]))
 
 (provide def def*
-         ;; xxx add these into the default precedence system
          (rename-out [def ≙]
                      [def* ≙*])
          (rename-out [remix-λ λ]
