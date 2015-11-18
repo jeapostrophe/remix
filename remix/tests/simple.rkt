@@ -128,7 +128,6 @@
 (module+ test
   v11b)
 
-#;#;
 (def v11c
   (λ.(+ $ 1) 10))
 (module+ test
