@@ -119,12 +119,12 @@
 (def f11
   λ.(+ 10 1))
 (def v11
-  (f11))
+  (f11 'ignored))
 (module+ test
   v11)
 
 (def v11b
-  (λ.(+ 10 1)))
+  (λ.(+ 10 1) 'ignored))
 (module+ test
   v11b)
 

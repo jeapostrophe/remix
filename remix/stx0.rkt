@@ -179,88 +179,17 @@
         (syntax/loc stx
           (remix-cut (#%dot bodies ...)))]))])
 
-;; xxx actually implement cut with _ or $ as the var accessor
-(define-syntax-parameter remix-cut-box
-  #f)
-
-(begin-for-syntax
-  (struct remix-cut-box-st ([round-two? #:mutable] arg-n->id))
-  (define (argmax* f l)
-    (if (empty? l)
-        #f
-        (argmax f l)))
-  (define (remix-cut-box-st->args this-box the-stx-base)
-    (match-define (remix-cut-box-st _ arg-n->id) this-box)
-    (define max-arg-n
-      (argmax* (λ (x) x) (hash-keys arg-n->id)))
-    (printf "cut box -> args ~v\n" arg-n->id)
-    (cond
-      [max-arg-n
-       (for/list ([i (in-range (add1 max-arg-n))])
-         (printf "arg ~v is...\n" i)
-         (define nr (format-id the-stx-base "cut-arg~a" i))
-         (hash-set! arg-n->id i nr)
-         nr)]
-      [else
-       #'()]))
-       
-  (define (remix-cut-index->stx index-stx)
-    (match-define (remix-cut-box-st round-two? arg-n->id)
-      (syntax-parameter-value #'remix-cut-box))
-    (syntax-parse index-stx
-      ;; xxx support keywords, rest, etc
-      [n:nat
-       (let ()
-         (define nv (syntax->datum #'n))
-         (define nr
-           (hash-ref! arg-n->id nv
-                      (λ ()
-                        (printf "cut arg needed for index ~v\n" nv)
-                        #t)))
-         (cond
-           [round-two?
-            (printf "really using it ~v\n" nr)
-            nr]
-           [else
-            (printf "not using it ~v\n" nr)
-            #'(error 'cut)]))])))
-
-(define-syntax remix-cut-$
-  (singleton-struct
-   #:property prop:procedure
-   (λ (_ stx)
-     (syntax-parse stx
-       [$:id
-        (syntax/loc stx
-          (#%dot $ 0))]))
-   #:methods gen:dot-transformer
-   [(define (dot-transform _ stx)
-      (syntax-parse stx
-        [(#%dot $:id index:expr)
-         (quasisyntax/loc stx
-           #,(remix-cut-index->stx #'index))]
-        ;; xxx test this
-        [(#%dot $:id index:expr more:expr ...)
-         (quasisyntax/loc stx
-           (#%dot #,(remix-cut-index->stx #'index) more ...))]))]))
-
-(require (for-syntax (for-syntax racket/base)))
+;; xxx make this more powerful, like super-cut
+(define-syntax-parameter remix-cut-$
+  (λ (stx)
+    (raise-syntax-error '$ "illegal outside cut" stx)))
 (define-syntax (remix-cut stx)
   (syntax-parse stx
     [(_ body:expr)
-     (let ()
-       (define this-box (remix-cut-box-st #f (make-hasheq)))
-       (define cut-body-stx
-         (quasisyntax/loc stx
-           (syntax-parameterize ([remix-cut-box #,this-box])
-             body)))
-       (local-expand cut-body-stx 'expression '())
-       (set-remix-cut-box-st-round-two?! this-box #t)
-       (define the-stx-base #'body)
-       (define cut-args (remix-cut-box-st->args this-box the-stx-base))
-       (printf "args are ~v\n" cut-args)
-       (quasisyntax/loc stx
-         (remix-λ #,cut-args #,cut-body-stx)))]))
+     (syntax/loc stx
+       (remix-λ (x)
+                (syntax-parameterize ([remix-cut-$ (make-rename-transformer #'x)])
+                  body)))]))
 
 (define-syntax (remix-cond stx)
   (syntax-parse stx
@@ -292,6 +221,7 @@
          #%dot
          #%app
          #%datum
+         quote
          unquote
          module
          module*
