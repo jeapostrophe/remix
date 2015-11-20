@@ -1,13 +1,26 @@
 #lang racket/base
 (require racket/match)
 
-(define (syntax-strings->input-port name ss)
+(define (syntax-strings->input-port name first-ss)
   (define line 1)
   (define col 0)
   (define pos 1)
   (define current-idx #f)
   (define current-bs #f)
-  (define next-ss ss)
+  (define next-ss first-ss)
+
+  (define (consume-ss!)
+    (match next-ss
+      ['() (void)]
+      [(cons ss more-ss)     
+       (set! line (syntax-line ss))
+       (set! col (syntax-column ss))
+       (set! pos (syntax-position ss))
+       (set! current-bs (string->bytes/utf-8 (syntax->datum ss)))
+       (set! current-idx 0)
+       (set! next-ss more-ss)]))
+
+  (consume-ss!)
 
   (define (read-in bs)
     (cond
@@ -15,12 +28,7 @@
        (match next-ss
          ['() eof]
          [(cons ss more-ss)
-          (set! line (syntax-line ss))
-          (set! col (syntax-column ss))
-          (set! pos (syntax-position ss))
-          (set! current-bs (string->bytes/utf-8 (syntax->datum ss)))
-          (set! current-idx 0)
-          (set! next-ss more-ss)
+          (consume-ss!)
           (read-in bs)])]
       [(< current-idx (bytes-length current-bs))
        (define how-many
@@ -32,6 +40,8 @@
        (set! current-idx end)
        (set! col (+ col how-many))
        (set! pos (+ pos how-many))
+       (unless (< current-idx (bytes-length current-bs))
+         (consume-ss!))
        how-many]
       [else
        (set! current-bs #f)

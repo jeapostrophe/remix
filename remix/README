@@ -57,6 +57,7 @@ TODO No set! (use data-structure mutation and :=)
 
 (def (var x) 5)
 {x := 6}
+{x ← 6}
 
 TODO No effects or expressions at top-level (controversial, mf says wrong) [set-once!]
 
@@ -157,7 +158,7 @@ TODO Remove multiple values?
 
 TODO Rocket-strength super cut:
 
-  λ.(+ $0 $1)
+  λ.(+ $.0 $.1)
 
 TODO Don't use English in exceptions and have more structured exns
 [demo on raco/pkg]
