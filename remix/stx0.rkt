@@ -10,6 +10,7 @@
          racket/stxparam)
 
 ;; xxx add extensibility
+;; xxx add case where x itself is a def transformer
 (define-syntax (def stx)
   (syntax-parse stx
     [(_ x:id . body:expr)
@@ -73,7 +74,7 @@
     (define v (syntax-local-value op (λ () #f)))
     (or (and v (binary-operator? v) (binary-operator-precedence v))
         (hash-ref PRECEDENCE-TABLE (syntax->datum op) 150)))
-  
+
   (define (shunting-yard:consume-input input output operators)
     (match input
       ['()
@@ -139,15 +140,65 @@
      #:declare dt (static dot-transformer? "dot transformer")
      (dot-transform (attribute dt.value) stx)]))
 
+(begin-for-syntax
+  (define-syntax-class remix-λ-raw-arg
+    #:attributes (λ-arg λ-bind)
+    #:literals (#%brackets)
+    ;; xxx add a case where x is a def transformer
+    (pattern x:id
+             #:attr λ-arg (syntax x)
+             #:attr λ-bind '())
+    ;; xxx write a test for this
+    (pattern (~and def-lhs:expr (#%brackets . _))
+             #:with x (generate-temporary #'def-lhs)
+             #:attr λ-arg #'x
+             #:attr λ-bind (list #'(def def-lhs x))))
+  (define-syntax-class remix-λ-maybe-def-arg
+    #:attributes (λ-arg λ-bind)
+    ;; xxx write a test for this
+    (pattern x:remix-λ-raw-arg
+             #:attr λ-arg #'x.λ-arg
+             #:attr λ-bind (attribute x.λ-bind))
+    ;; xxx write a test for this
+    (pattern (x:remix-λ-raw-arg default:expr)
+             #:attr λ-arg #'(x.λ-arg default)
+             #:attr λ-bind (attribute x.λ-bind)))
+  (define-splicing-syntax-class remix-λ-arg
+    #:attributes ([λ-arg 1] λ-bind)
+    ;; xxx write a test for this
+    (pattern (~seq x:remix-λ-maybe-def-arg)
+             #:attr [λ-arg 1] (list #'x.λ-arg)
+             #:attr λ-bind (attribute x.λ-bind))
+    ;; xxx write a test for this
+    (pattern (~seq kw:keyword x:remix-λ-maybe-def-arg)
+             #:attr [λ-arg 1] (list #'kw #'x.λ-arg)
+             #:attr λ-bind (attribute x.λ-bind)))
+  (define-syntax-class remix-λ-args
+    #:attributes (λ-args
+                  [λ-binds 1])
+    ;; xxx write a test for this
+    (pattern ()
+             #:attr λ-args (syntax ())
+             #:attr [λ-binds 1] '())
+    ;; xxx write a test for this
+    (pattern x:remix-λ-raw-arg
+             #:attr λ-args (syntax x.λ-arg)
+             #:attr [λ-binds 1] (list #'x.λ-bind))
+    ;; xxx write a test for this
+    (pattern (x:remix-λ-arg . xs:remix-λ-args)
+             #:attr λ-args
+             #'(x.λ-arg ... . xs.λ-args)
+             #:attr [λ-binds 1]
+             (append (attribute x.λ-bind)
+                     (attribute xs.λ-binds)))))
+
 (define-syntax/singleton-struct remix-λ
   #:property prop:procedure
   (λ (_ stx)
     (syntax-parse stx
-      ;; xxx transform args into bind plus what racket λ needs
-      ;; xxx no rest args?
-      [(_ (arg:id ...) . body:expr)
+      [(_ args:remix-λ-args . body:expr)
        (syntax/loc stx
-         (λ (arg ...) (remix-block . body)))]))
+         (λ args.λ-args (remix-block args.λ-binds ... (remix-block . body))))]))
   #:methods gen:dot-transformer
   [(define (dot-transform _ stx)
      (syntax-parse stx
