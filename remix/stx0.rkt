@@ -69,7 +69,7 @@
             '+ 40 '- 40
             '< 60 '<= 60
             '> 60 '>= 60
-            '= 70 '≙ 70 '≙* 70))
+            '= 70 '≙ 70 '≙* 70 '≡ 70))
   (define (shunting-yard:precendence op)
     (define v (syntax-local-value op (λ () #f)))
     (or (and v (binary-operator? v) (binary-operator-precedence v))
@@ -140,6 +140,9 @@
      #:declare dt (static dot-transformer? "dot transformer")
      (dot-transform (attribute dt.value) stx)]))
 
+(define-syntax (#%rest stx)
+  (raise-syntax-error '#%rest "Illegal outside of function arguments" stx))
+
 (begin-for-syntax
   (define-syntax-class remix-λ-raw-arg
     #:attributes (λ-arg λ-bind)
@@ -155,36 +158,31 @@
              #:attr λ-bind (list #'(def def-lhs x))))
   (define-syntax-class remix-λ-maybe-def-arg
     #:attributes (λ-arg λ-bind)
-    ;; xxx write a test for this
     (pattern x:remix-λ-raw-arg
              #:attr λ-arg #'x.λ-arg
              #:attr λ-bind (attribute x.λ-bind))
-    ;; xxx write a test for this
     (pattern (x:remix-λ-raw-arg default:expr)
              #:attr λ-arg #'(x.λ-arg default)
              #:attr λ-bind (attribute x.λ-bind)))
   (define-splicing-syntax-class remix-λ-arg
     #:attributes ([λ-arg 1] λ-bind)
-    ;; xxx write a test for this
     (pattern (~seq x:remix-λ-maybe-def-arg)
              #:attr [λ-arg 1] (list #'x.λ-arg)
              #:attr λ-bind (attribute x.λ-bind))
-    ;; xxx write a test for this
     (pattern (~seq kw:keyword x:remix-λ-maybe-def-arg)
              #:attr [λ-arg 1] (list #'kw #'x.λ-arg)
              #:attr λ-bind (attribute x.λ-bind)))
   (define-syntax-class remix-λ-args
     #:attributes (λ-args
                   [λ-binds 1])
-    ;; xxx write a test for this
+    #:literals (#%rest)
     (pattern ()
              #:attr λ-args (syntax ())
              #:attr [λ-binds 1] '())
-    ;; xxx write a test for this
-    (pattern x:remix-λ-raw-arg
+    (pattern (~or x:remix-λ-raw-arg
+                  (#%rest x:remix-λ-raw-arg))
              #:attr λ-args (syntax x.λ-arg)
-             #:attr [λ-binds 1] (list #'x.λ-bind))
-    ;; xxx write a test for this
+             #:attr [λ-binds 1] (attribute x.λ-bind))
     (pattern (x:remix-λ-arg . xs:remix-λ-args)
              #:attr λ-args
              #'(x.λ-arg ... . xs.λ-args)
@@ -243,6 +241,7 @@
          (rename-out [remix-λ λ]
                      [remix-cond cond]
                      [remix-cut-$ $])
+         #%rest
          #%brackets
          #%braces
          (for-syntax gen:binary-operator

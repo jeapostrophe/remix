@@ -7,11 +7,14 @@
 ;; we use require to get everything else. most of it comes from stx0
 (require remix/stx0
          remix/num/gen0)
+(module+ test
+  ;; This introduces ≡ as a testing form
+  (require remix/test0))
 
 ;; define is replaced with def
 (def z 42)
 (module+ test
-  z)
+  {z ≡ 42})
 
 ;; when def has more forms than one, they are put inside of a block
 (def x
@@ -19,7 +22,7 @@
   (def b 2)
   (+ a b))
 (module+ test
-  x)
+  {x ≡ 42})
 
 ;; but of course def supports function definitions. [] is NOT the same
 ;; as (), it parses as #%brackets and defaults to expanding to a block
@@ -29,7 +32,7 @@
       z]
      y))
 (module+ test
-  (f x x))
+  {(f x x) ≡ 126})
 
 ;; cond requires []s for the question-answer pairs. It uses this to
 ;; make any code in between clauses go in between the `if`s that pop
@@ -41,9 +44,9 @@
     [(< z 100) "div 100"]
     [#:else z]))
 (module+ test
-  (g 50)
-  (g 199)
-  (g 200))
+  {(g 50) ≡ "100"}
+  {(g 199) ≡ "div 100"}
+  {(g 200) ≡ 100})
 
 ;; the @ reader is always on. One fun thing about this is that you can
 ;; make non-() macros. I wrote a little helper function to turn the
@@ -65,7 +68,7 @@
 (def v7
   {3 + 4})
 (module+ test
-  v7)
+  {v7 ≡ 7})
 
 ;; {} use C's precedence and considers the things you expect to be
 ;; operators. there's a syntax-time struct property that allows you to
@@ -73,7 +76,7 @@
 (def v-26
   {2 * 3 - 48 / 4 - 4 * 5})
 (module+ test
-  v-26)
+  {v-26 ≡ -26})
 
 ;; if a symbol contains no alphabetic or numeric characters, then it
 ;; is considered an operator. This means you can automatically use
@@ -81,19 +84,19 @@
 (def v85
   {z * 2 + 1})
 (module+ test
-  v85)
+  {v85 ≡ 85})
 
 (def v1
   (def & bitwise-and)
   {5 & 1})
 (module+ test
-  v1)
+  {v1 ≡ 1})
 
 (def v56
   (def (→ x y) (+ (* x x) y))
   {v7 → v7})
 (module+ test
-  v56)
+  {v56 ≡ 56})
 
 ;; However, if you use , then you can force anything to be a binary
 ;; operator and force something that would have been a binary operator
@@ -102,18 +105,18 @@
   (def (f x y) (+ x y))
   {v7 ,f v7})
 (module+ test
-  v14)
+  {v14 ≡ 14})
 
 (def v14b
   {v7 ,(λ (x y) (+ x y)) v7})
 (module+ test
-  v14b)
+  {v14b ≡ 14})
 
 (def v9
   (def & 2)
   {v7 + ,&})
 (module+ test
-  v9)
+  {v9 ≡ 9})
 
 ;; λ is a dot-transformer for cut
 (def f11
@@ -121,29 +124,29 @@
 (def v11
   (f11 'ignored))
 (module+ test
-  v11)
+  {v11 ≡ 11})
 
 (def v11b
   (λ.(+ 10 1) 'ignored))
 (module+ test
-  v11b)
+  {v11b ≡ 11})
 
 (def v11c
   (λ.(+ $ 1) 10))
 (module+ test
-  v11c)
+  {v11c ≡ 11})
 
 ;; ≙ is a synonym for def, and because of the {} rules, is a binary
 ;; operator.
 {v33 ≙ 33}
 (module+ test
-  v33)
+  {v33 ≡ 33})
 
 (def v28
   {(f x) ≙ x + x}
   (f 14))
 (module+ test
-  v28)
+  {v28 ≡ 28})
 
 ;; def* allows nested binding inside blocks
 (def v64
@@ -155,6 +158,26 @@
   (def* x {x + x})
   x)
 (module+ test
-  v64)
+  {v64 ≡ 64})
 
 ;; (def [stx #%posn] (layout x y))
+
+(def (f-no-args) 42)
+(def (f-one-arg x) x)
+(def (f-kw-arg #:x x) x)
+(def (f-kw-args #:x x y) (+ x y))
+(def (f-def-arg (x 20) (y 22)) (+ x y))
+(def (f-two-arg x y) (+ x y))
+(def (f-rest-args #%rest x) 42)
+(module+ test
+  {(f-no-args) ≡ 42}
+  {(f-one-arg 42) ≡ 42}
+  {(f-kw-arg #:x 42) ≡ 42}
+  {(f-kw-args #:x 22 20) ≡ 42}
+  {(f-two-arg 20 22) ≡ 42}
+  {(f-def-arg) ≡ 42}
+  {(f-def-arg 21) ≡ 43}
+  {(f-def-arg 21 21) ≡ 42}
+  {(f-rest-args) ≡ 42}
+  {(f-rest-args 1) ≡ 42}
+  {(f-rest-args 1 2 3) ≡ 42})
