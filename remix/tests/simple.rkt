@@ -148,20 +148,24 @@
 (module+ test
   {v28 ≡ 28})
 
-;; def* allows nested binding inside blocks
+;; def* allows nested binding inside blocks. This is aliased to nest
+;; for def* transformers like parameterize that would look strange
+;; otherwise.
 (def v64
   (def* x 2)
   (def* x {x + x})
   (def* x {x + x})
-  (def* x {x + x})
+  (nest x {x + x})
   (def* x {x + x})
   (def* x {x + x})
   x)
 (module+ test
   {v64 ≡ 64})
 
-;; (def [stx #%posn] (layout x y))
-
+;; The lambda and def syntax allow all the normal forms of Racket
+;; function arguments. The main exception being rest arguments are
+;; specified differently because the . would be parsed incorrectly
+;; otherwise.
 (def (f-no-args) 42)
 (def (f-one-arg x) x)
 (def (f-kw-arg #:x x) x)
@@ -181,3 +185,4 @@
   {(f-rest-args) ≡ 42}
   {(f-rest-args 1) ≡ 42}
   {(f-rest-args 1 2 3) ≡ 42})
+

@@ -237,7 +237,8 @@
 
 (provide def def*
          (rename-out [def ≙]
-                     [def* ≙*])
+                     [def* ≙*]
+                     [def* nest])
          (rename-out [remix-λ λ]
                      [remix-cond cond]
                      [remix-cut-$ $])
