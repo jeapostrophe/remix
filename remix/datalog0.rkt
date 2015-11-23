@@ -2,7 +2,7 @@
 (require datalog/runtime
          (prefix-in stx: datalog/stx)
          (for-syntax racket/base
-                     remix/raw-stx0
+                     remix/stx/raw0
                      datalog/private/compiler
                      datalog/parse
                      syntax/parse))

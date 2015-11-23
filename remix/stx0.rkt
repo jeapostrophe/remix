@@ -6,6 +6,7 @@
                      racket/syntax
                      syntax/parse)
          syntax/parse/define
+         remix/stx/singleton-struct0
          racket/stxparam)
 
 ;; xxx add extensibility
@@ -50,27 +51,6 @@
     [(_ . body:expr)
      (syntax/loc stx
        (remix-block . body))]))
-
-(module singleton racket/base
-  (require (for-syntax racket/base
-                       syntax/parse
-                       racket/syntax))
-  (define-syntax (singleton-struct stx)
-    (syntax-parse stx
-      [(singleton-struct . struct-args)
-       (with-syntax ([the-singleton (generate-temporary (syntax-local-name))])
-         (syntax/loc stx
-           (let ()
-             (struct the-singleton () . struct-args)
-             (the-singleton))))]))
-  (provide singleton-struct))
-(require (submod "." singleton)
-         (for-syntax (submod "." singleton)))
-
-(define-simple-macro (define/singleton-struct singleton:id . struct-args)
-  (define singleton (singleton-struct . struct-args)))
-(define-simple-macro (define-syntax/singleton-struct singleton:id . struct-args)
-  (define-syntax singleton (singleton-struct . struct-args)))
 
 (begin-for-syntax
   (define-generics binary-operator
