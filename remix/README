@@ -201,3 +201,6 @@ types for float/int/fixnum/etc
 TODO greg's defs
 https://github.com/greghendershott/defn
 https://github.com/greghendershott/def-jambda
+
+TODO nest form like def* for things like parameterize that would look
+weird as def* transformers
