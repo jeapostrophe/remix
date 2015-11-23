@@ -9,10 +9,21 @@
          remix/stx/singleton-struct0
          racket/stxparam)
 
-;; xxx add extensibility
-;; xxx add case where x itself is a def transformer
+(begin-for-syntax
+  (define-generics def-transformer
+    (def-transform def-transformer stx)))
 (define-syntax (def stx)
   (syntax-parse stx
+    #:literals (#%brackets)
+    ;; xxx test this
+    [(_ (#%brackets dt . _) . _)
+     #:declare dt (static def-transformer? "def transformer")
+     (def-transform (attribute dt.value) stx)]
+    ;; xxx test this
+    [(_ dt . body:expr)
+     #:declare dt (static def-transformer? "def transformer")
+     (syntax/loc stx
+       (def (#%brackets dt) . body))]
     [(_ x:id . body:expr)
      (syntax/loc stx
        (define x (remix-block . body)))]
@@ -23,9 +34,20 @@
 (define-syntax (def* stx)
   (raise-syntax-error 'def* "illegal outside of block" stx))
 
-;; xxx add extensibility
+(begin-for-syntax
+  (define-generics def*-transformer
+    (def*-transform def*-transformer stx)))
 (define-syntax (def*-internal stx)
   (syntax-parse stx
+    ;; xxx test this
+    [(_ (#%brackets dt . _) _)
+     #:declare dt (static def*-transformer? "def* transformer")
+     (def*-transform (attribute dt.value) stx)]
+    ;; xxx test this
+    [(_ (dt . def-body:expr) bind-body:expr)
+     #:declare dt (static def*-transformer? "def* transformer")
+     (syntax/loc stx
+       (def*-internal ((#%brackets dt) . def-body) bind-body))]
     [(_ (x:id . def-body:expr) bind-body:expr)
      (syntax/loc stx
        (let ([x (remix-block . def-body)])
@@ -136,7 +158,7 @@
     [(_ x:expr ... (#%dot y:expr ...))
      (syntax/loc stx
        (#%dot x ... y ...))]
-    [(_ dt . more:expr)
+    [(_ dt . _)
      #:declare dt (static dot-transformer? "dot transformer")
      (dot-transform (attribute dt.value) stx)]))
 
@@ -147,7 +169,18 @@
   (define-syntax-class remix-λ-raw-arg
     #:attributes (λ-arg λ-bind)
     #:literals (#%brackets)
-    ;; xxx add a case where x is a def transformer
+    ;; xxx test this
+    (pattern dt
+             #:declare dt (static def-transformer? "def transformer")
+             #:with x (generate-temporary #'dt)
+             #:attr λ-arg #'x
+             #:attr λ-bind (list #'(def dt x)))
+    ;; xxx test this
+    (pattern dt
+             #:declare dt (static def*-transformer? "def* transformer")
+             #:with x (generate-temporary #'dt)
+             #:attr λ-arg #'x
+             #:attr λ-bind (list #'(def* dt x)))
     (pattern x:id
              #:attr λ-arg (syntax x)
              #:attr λ-bind '())
