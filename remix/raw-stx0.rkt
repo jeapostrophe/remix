@@ -1,5 +1,6 @@
 #lang racket/base
-(require racket/match)
+(require racket/contract/base
+         racket/match)
 
 (define (syntax-strings->input-port name first-ss)
   (define line 1)
@@ -52,4 +53,9 @@
   (make-input-port name read-in #f void #f #f
                    get-location void #f #f))
 
-(provide syntax-strings->input-port)
+(provide
+ (contract-out
+  [syntax-strings->input-port
+   (-> any/c
+       (listof syntax?)
+       input-port?)]))

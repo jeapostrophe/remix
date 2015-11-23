@@ -179,7 +179,6 @@
         (syntax/loc stx
           (remix-cut (#%dot bodies ...)))]))])
 
-;; xxx make this more powerful, like super-cut
 (define-syntax-parameter remix-cut-$
   (λ (stx)
     (raise-syntax-error '$ "illegal outside cut" stx)))
