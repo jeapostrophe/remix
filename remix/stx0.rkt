@@ -31,43 +31,55 @@
      (syntax/loc stx
        (def x (remix-λ args . body)))]))
 
-(define-syntax (def* stx)
-  (raise-syntax-error 'def* "illegal outside of block" stx))
+(module remix-block racket/base
+  (require (for-syntax racket/base
+                       racket/generic
+                       syntax/parse))
+  (define-syntax (def* stx)
+    (raise-syntax-error 'def* "illegal outside of block" stx))
 
-(begin-for-syntax
-  (define-generics def*-transformer
-    (def*-transform def*-transformer stx)))
-(define-syntax (def*-internal stx)
-  (syntax-parse stx
-    ;; xxx test this
-    [(_ (#%brackets dt . _) _)
-     #:declare dt (static def*-transformer? "def* transformer")
-     (def*-transform (attribute dt.value) stx)]
-    ;; xxx test this
-    [(_ (dt . def-body:expr) bind-body:expr)
-     #:declare dt (static def*-transformer? "def* transformer")
-     (syntax/loc stx
-       (def*-internal ((#%brackets dt) . def-body) bind-body))]
-    [(_ (x:id . def-body:expr) bind-body:expr)
-     (syntax/loc stx
-       (let ([x (remix-block . def-body)])
-         (remix-block . bind-body)))]
-    [(_ ((x . args:expr) . def-body:expr) bind-body:expr)
-     (syntax/loc stx
-       (def*-internal (x (remix-λ args . def-body)) bind-body))]))
+  (begin-for-syntax
+    (define-generics def*-transformer
+      (def*-transform def*-transformer stx)))
 
-(define-syntax (remix-block stx)
-  (syntax-parse stx
-    #:literals (def*)
-    [(_ (~and (~not (def* . _)) before:expr) ...
-        (def* . def*-body:expr) . after:expr)
-     (syntax/loc stx
-       (let ()
-         before ...
-         (def*-internal def*-body after)))]
-    [(_ . body:expr)
-     (syntax/loc stx
-       (let () . body))]))
+  (define-syntax (def*-internal stx)
+    (syntax-parse stx
+      ;; xxx test this
+      [(_ (#%brackets dt . _) _)
+       #:declare dt (static def*-transformer? "def* transformer")
+       (def*-transform (attribute dt.value) stx)]
+      ;; xxx test this
+      [(_ (dt . def-body:expr) bind-body:expr)
+       #:declare dt (static def*-transformer? "def* transformer")
+       (syntax/loc stx
+         (def*-internal ((#%brackets dt) . def-body) bind-body))]
+      [(_ (x:id . def-body:expr) bind-body:expr)
+       (syntax/loc stx
+         (let ([x (remix-block . def-body)])
+           (remix-block . bind-body)))]
+      [(_ ((x . args:expr) . def-body:expr) bind-body:expr)
+       (syntax/loc stx
+         (def*-internal (x (remix-λ args . def-body)) bind-body))]))
+  
+  (define-syntax (remix-block stx)
+    (syntax-parse stx
+      #:literals (def*)
+      [(_ (~and (~not (def* . _)) before:expr) ...
+          (def* . def*-body:expr) . after:expr)
+       (syntax/loc stx
+         (let ()
+           before ...
+           (def*-internal def*-body after)))]
+      [(_ . body:expr)
+       (syntax/loc stx
+         (let () . body))]))
+  
+  (provide def*
+           (for-syntax def*-transformer?
+                       gen:def*-transformer)
+           remix-block))
+(require (submod "." remix-block)
+         (for-syntax (submod "." remix-block)))
 
 (define-syntax #%brackets
   (make-rename-transformer #'remix-block))
@@ -310,7 +322,6 @@
         #:literals (#%brackets)
         [(_def (#%brackets _stx x:id) . body:expr)
          (syntax/loc stx
-           ;; xxx this "let ()" should be remix-block
-           (define-syntax x (let () . body)))]))]))
+           (define-syntax x (remix-block . body)))]))]))
 
 (provide stx)
