@@ -35,6 +35,14 @@
 (module+ test
   {(f x x) ≡ 126})
 
+;; That's the same as just 'block' if you want to be specific
+(def (other-f x y)
+  (+ (block (def z (+ x x))
+            z)
+     y))
+(module+ test
+  {(other-f x x) ≡ 126})
+
 ;; cond requires []s for the question-answer pairs. It uses this to
 ;; make any code in between clauses go in between the `if`s that pop
 ;; out of the cond macro. finally, cond REQUIRES a #:else clause.
@@ -210,3 +218,31 @@
   (f y x …))
 (module+ test
   {(flipper - 5 9 0) ≡ (- 0 5 9)})
+
+;; data gives us data structures and that sort of thing
+(require remix/data0)
+
+;; First, we can define static interfaces, which associate dot-terms
+;; with particular functions.
+(def (example-f x y) x)
+(def (example-g x y) y)
+(def [stx example^]
+  (static-interface
+   [f example-f]
+   [g example-g]))
+(module+ test
+  {(example^.f 1 2) ≡ 1}
+  {(example^.g 1 2) ≡ 2})
+
+;; These static interfaces allow nesting
+(def example2-h 19)
+(def [stx example2^]
+  (static-interface
+   [fg example^]
+   [h example2-h]))
+(module+ test
+  {(example2^.fg.f 1 2) ≡ 1}
+  {(example2^.fg.g 1 2) ≡ 2}
+  {example2^.h ≡ 19})
+
+

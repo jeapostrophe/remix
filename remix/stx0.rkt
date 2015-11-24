@@ -293,6 +293,7 @@
                      [remix-cond cond]
                      [remix-cut-$ $])
          #%rest
+         (rename-out [remix-block block])
          #%brackets
          #%braces
          (for-syntax gen:binary-operator
