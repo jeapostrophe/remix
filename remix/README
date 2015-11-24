@@ -172,7 +172,7 @@ TODO zos don't appear to users (switch to interp if no write access)
 
 TODO only use syntax-parse and define-simple-macro
 
-TODO use \dots as ...
+DONE use \ldots as ...
 
 TODO add a threading macro
 
@@ -205,9 +205,11 @@ https://github.com/greghendershott/def-jambda
 DONE nest form like def* for things like parameterize that would look
 weird as def* transformers
 
-TODO stx def transfomer
+DONE stx def transfomer
 
-TODO mac def transformer (simple-macro)
+TODO fun def transformer
+
+DONE mac def transformer (simple-macro)
 
 TODO mac def+ transformer (syntax-parser)
 

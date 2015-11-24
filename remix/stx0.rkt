@@ -15,7 +15,6 @@
 (define-syntax (def stx)
   (syntax-parse stx
     #:literals (#%brackets)
-    ;; xxx test this
     [(_ (#%brackets dt . _) . _)
      #:declare dt (static def-transformer? "def transformer")
      (def-transform (attribute dt.value) stx)]
@@ -301,6 +300,7 @@
                      binary-operator-precedence)
          #%dot
          (for-syntax gen:dot-transformer)
+         (rename-out [... …])
          #%app
          #%datum
          quote
@@ -310,6 +310,19 @@
          module+
          for-syntax
          provide)
+
+(define-syntax val
+  (singleton-struct
+   #:property prop:procedure
+   (λ (stx)
+     (raise-syntax-error 'val "Illegal outside def" stx))
+   #:methods gen:def-transformer
+   [(define (def-transform _ stx)
+      (syntax-parse stx
+        #:literals (#%brackets)
+        [(_def (#%brackets _stx x:id) . body:expr)
+         (syntax/loc stx
+           (define x (remix-block . body)))]))]))
 
 (define-syntax stx
   (singleton-struct
@@ -324,4 +337,19 @@
          (syntax/loc stx
            (define-syntax x (remix-block . body)))]))]))
 
-(provide stx)
+(define-syntax mac
+  (singleton-struct
+   #:property prop:procedure
+   (λ (stx)
+     (raise-syntax-error 'mac "Illegal outside def" stx))
+   #:methods gen:def-transformer
+   [(define (def-transform _ stx)
+      (syntax-parse stx
+        #:literals (#%brackets)
+        [(_def (#%brackets _mac (x:id . pat:expr)) . body:expr)
+         (syntax/loc stx
+           (define-simple-macro (x . pat) . body))]))]))
+
+(provide val
+         stx
+         mac)

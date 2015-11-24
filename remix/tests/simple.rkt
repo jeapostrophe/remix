@@ -187,5 +187,26 @@
   {(f-rest-args 1) ≡ 42}
   {(f-rest-args 1 2 3) ≡ 42})
 
+;; def supports a variety of "def transformers" that change from
+;; defining a phase-0 value to something else.
+
+;; val ensures that a function is NOT defined
+(def [val v99] 99)
+(module+ test
+  {v99 ≡ 99})
+
+;; stx is define-syntax
 (require (for-syntax remix/stx0))
 (def [stx stx42] 42)
+
+;; mac is define-simple-macro
+(def [mac (flip f x y)]
+  (f y x))
+(module+ test
+  {(flip - 5 0) ≡ (- 0 5)})
+
+;; … (\ldots) is ... (because that doesn't work with cdots)
+(def [mac (flipper f x … y)]
+  (f y x …))
+(module+ test
+  {(flipper - 5 9 0) ≡ (- 0 5 9)})
