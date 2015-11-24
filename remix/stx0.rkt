@@ -69,11 +69,8 @@
      (syntax/loc stx
        (let () . body))]))
 
-(define-syntax (#%brackets stx)
-  (syntax-parse stx
-    [(_ . body:expr)
-     (syntax/loc stx
-       (remix-block . body))]))
+(define-syntax #%brackets
+  (make-rename-transformer #'remix-block))
 
 (begin-for-syntax
   (define-generics binary-operator
@@ -185,10 +182,17 @@
              #:attr λ-arg (syntax x)
              #:attr λ-bind '())
     ;; xxx write a test for this
-    (pattern (~and def-lhs:expr (#%brackets . _))
+    (pattern (~and def-lhs:expr (#%brackets dt . _))
+             #:declare dt (static def-transformer? "def transformer")
              #:with x (generate-temporary #'def-lhs)
              #:attr λ-arg #'x
-             #:attr λ-bind (list #'(def def-lhs x))))
+             #:attr λ-bind (list #'(def def-lhs x)))
+    ;; xxx write a test for this
+    (pattern (~and def-lhs:expr (#%brackets dt . _))
+             #:declare dt (static def*-transformer? "def* transformer")
+             #:with x (generate-temporary #'def-lhs)
+             #:attr λ-arg #'x
+             #:attr λ-bind (list #'(def* def-lhs x))))
   (define-syntax-class remix-λ-maybe-def-arg
     #:attributes (λ-arg λ-bind)
     (pattern x:remix-λ-raw-arg
@@ -269,6 +273,8 @@
                         (remix-cond . more))))]))
 
 (provide def def*
+         (for-syntax gen:def-transformer
+                     gen:def*-transformer)
          (rename-out [def ≙]
                      [def* ≙*]
                      [def* nest])
@@ -282,6 +288,7 @@
                      binary-operator?
                      binary-operator-precedence)
          #%dot
+         (for-syntax gen:dot-transformer)
          #%app
          #%datum
          quote
@@ -289,4 +296,21 @@
          module
          module*
          module+
+         for-syntax
          provide)
+
+(define-syntax stx
+  (singleton-struct
+   #:property prop:procedure
+   (λ (stx)
+     (raise-syntax-error 'stx "Illegal outside def" stx))
+   #:methods gen:def-transformer
+   [(define (def-transform _ stx)
+      (syntax-parse stx
+        #:literals (#%brackets)
+        [(_def (#%brackets _stx x:id) . body:expr)
+         (syntax/loc stx
+           ;; xxx this "let ()" should be remix-block
+           (define-syntax x (let () . body)))]))]))
+
+(provide stx)

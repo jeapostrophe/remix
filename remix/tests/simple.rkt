@@ -9,6 +9,7 @@
          remix/num/gen0)
 (module+ test
   ;; This introduces ≡ as a testing form
+  ;; XXX Maybe drop this and add a test macro like rackunit/chk
   (require remix/test0))
 
 ;; define is replaced with def
@@ -186,3 +187,5 @@
   {(f-rest-args 1) ≡ 42}
   {(f-rest-args 1 2 3) ≡ 42})
 
+(require (for-syntax remix/stx0))
+(def [stx stx42] 42)

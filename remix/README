@@ -187,7 +187,7 @@ TODO @docs
 DONE [] for Rec def blocks or def* for let* behavior
      and Search for def in block and trans to local-def which sees body
 
-TODO [] for def & def* transformer
+DONE [] for def & def* transformer
 
 TODO Meta def & def* trans for more expansion (docs and test), static
 info (types), and def transformers (types), maybe syntax ---
@@ -204,3 +204,11 @@ https://github.com/greghendershott/def-jambda
 
 DONE nest form like def* for things like parameterize that would look
 weird as def* transformers
+
+TODO stx def transfomer
+
+TODO mac def transformer (simple-macro)
+
+TODO mac def+ transformer (syntax-parser)
+
+TODO parameterize def* transformer
