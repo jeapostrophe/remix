@@ -17,6 +17,9 @@
     #:literals (#%brackets)
     [(_ (#%brackets dt . _) . _)
      #:declare dt (static def-transformer? "def transformer")
+     ;; xxx maybe this interface should be thicker, because right now
+     ;; it can expand to anything at all. thicker would mean more
+     ;; composable.
      (def-transform (attribute dt.value) stx)]
     ;; xxx test this
     [(_ dt . body:expr)

@@ -1,10 +1,7 @@
 #lang remix
-;; This requires changes to Racket that are not yet pushed, but will
-;; be once the release branch is made.
-
 ;; #lang remix only contains two bindings: #%module-begin and require
 ;;
-;; we use require to get everything else. most of it comes from stx0
+;; We use require to get everything else. most of it comes from stx0
 (require remix/stx0
          remix/num/gen0)
 (module+ test
@@ -219,7 +216,8 @@
 (module+ test
   {(flipper - 5 9 0) ≡ (- 0 5 9)})
 
-;; data gives us data structures and that sort of thing
+;; data gives us interfaces, compound data, and data types and that
+;; sort of thing
 (require remix/data0)
 
 ;; First, we can define static interfaces, which associate dot-terms
@@ -260,4 +258,3 @@
   (ee.f 2))
 (module+ test
   {(f-using-example 1) ≡ 1})
-
