@@ -245,4 +245,10 @@
   {(example2^.fg.g 1 2) ≡ 2}
   {example2^.h ≡ 19})
 
-
+;; They are also def transformers and when used in that way, they
+;; implicitly pass the binding on as the first argument to functions
+;; when used.
+(def [example^ ee] 1)
+(module+ test
+  {(ee.f 2) ≡ 1}
+  {(ee.g 2) ≡ 2})

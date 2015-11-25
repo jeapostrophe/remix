@@ -14,7 +14,8 @@
     (syntax-parse stx
       #:literals (remix:#%brackets)
       [(_si (remix:#%brackets lhs:id rhs:id) ...)
-       (with-syntax ([int-name (syntax-local-name)])
+       (with-syntax ([int-name (syntax-local-name)]
+                     [(def-rhs ...) (generate-temporaries #'(rhs ...))])
          (syntax/loc stx
            (let ()
              (define int-id->orig-id
@@ -50,6 +51,33 @@
                     (with-syntax ([xb (get-binding stx #'x)])
                       (syntax/loc stx
                         (let-syntax ([x (make-rename-transformer #'xb)])
-                          (remix:#%dot x . more))))]))]))))])))
+                          (remix:#%dot x . more))))]))]
+              #:methods remix:gen:app-dot-transformer
+              [(define (app-dot-transform _ stx)
+                 (syntax-parse stx
+                   [(_app (_dot me:id x:id) . body:expr)
+                    (quasisyntax/loc stx
+                      (#,(get-binding stx #'x) . body))]
+                   [(_app (_dot me:id x:id . more:expr) . body:expr)
+                    (with-syntax ([xb (get-binding stx #'x)])
+                      (syntax/loc stx
+                        (let-syntax ([x (make-rename-transformer #'xb)])
+                          (remix:#%app (remix:#%dot x . more) . body))))]))]
+              #:methods remix:gen:def-transformer
+              [(define (def-transform _ stx)
+                 (syntax-parse stx
+                   #:literals (remix:#%brackets)
+                   [(def (remix:#%brackets me:id x:id) . body:expr)
+                    (with-syntax ([real-x (generate-temporary #'x)])
+                      (syntax/loc stx
+                        (begin
+                          (remix:def real-x . body)
+                          (remix:def (remix:#%brackets remix:mac (def-rhs . blah:expr))
+                                     (rhs real-x . blah))
+                          ...
+                          (remix:def (remix:#%brackets remix:stx x)
+                                     (static-interface
+                                      (remix:#%brackets lhs def-rhs)
+                                      ...)))))]))]))))])))
 
 (provide (for-syntax static-interface))

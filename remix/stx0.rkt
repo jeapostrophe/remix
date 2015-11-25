@@ -26,7 +26,7 @@
     [(_ x:id . body:expr)
      (syntax/loc stx
        (define x (remix-block . body)))]
-    [(_ (x . args:expr) . body:expr)
+    [(_ ((~and (~not #%brackets) x) . args:expr) . body:expr)
      (syntax/loc stx
        (def x (remix-λ args . body)))]))
 
@@ -43,6 +43,7 @@
 
   (define-syntax (def*-internal stx)
     (syntax-parse stx
+      #:literals (#%brackets)
       ;; xxx test this
       [(_ (#%brackets dt . _) _)
        #:declare dt (static def*-transformer? "def* transformer")
@@ -52,11 +53,11 @@
        #:declare dt (static def*-transformer? "def* transformer")
        (syntax/loc stx
          (def*-internal ((#%brackets dt) . def-body) bind-body))]
-      [(_ (x:id . def-body:expr) bind-body:expr)
+      [(_ ((~and (~not #%brackets) x:id) . def-body:expr) bind-body:expr)
        (syntax/loc stx
          (let ([x (remix-block . def-body)])
            (remix-block . bind-body)))]
-      [(_ ((x . args:expr) . def-body:expr) bind-body:expr)
+      [(_ (((~and (~not #%brackets) x) . args:expr) . def-body:expr) bind-body:expr)
        (syntax/loc stx
          (def*-internal (x (remix-λ args . def-body)) bind-body))]))
   
@@ -72,16 +73,17 @@
       [(_ . body:expr)
        (syntax/loc stx
          (let () . body))]))
+
+  (define-syntax #%brackets
+    (make-rename-transformer #'remix-block))
   
   (provide def*
+           #%brackets
            (for-syntax def*-transformer?
                        gen:def*-transformer)
            remix-block))
 (require (submod "." remix-block)
          (for-syntax (submod "." remix-block)))
-
-(define-syntax #%brackets
-  (make-rename-transformer #'remix-block))
 
 (begin-for-syntax
   (define-generics binary-operator
@@ -169,6 +171,22 @@
     [(_ dt . _)
      #:declare dt (static dot-transformer? "dot transformer")
      (dot-transform (attribute dt.value) stx)]))
+
+(begin-for-syntax
+  (define-generics app-dot-transformer
+    (app-dot-transform app-dot-transformer stx)))
+(define-syntax (remix-#%app stx)
+  (syntax-parse stx
+    #:literals (#%dot)
+    [(_ (~and dot-rator (#%dot x:expr ... (#%dot y:expr ...))) . body:expr)
+     (syntax/loc stx
+       (#%app (#%dot x ... y ...) . body))]
+    [(_ (~and dot-rator (#%dot adt . _)) . body:expr)
+     #:declare adt (static app-dot-transformer? "app-dot transformer")
+     (app-dot-transform (attribute adt.value) stx)]
+    [(_ . body:expr)
+     (syntax/loc stx
+       (#%app . body))]))
 
 (define-syntax (#%rest stx)
   (raise-syntax-error '#%rest "Illegal outside of function arguments" stx))
@@ -301,8 +319,9 @@
                      binary-operator-precedence)
          #%dot
          (for-syntax gen:dot-transformer)
-         (rename-out [... …])
-         #%app
+         (rename-out [remix-#%app #%app])
+         (for-syntax gen:app-dot-transformer)
+         (rename-out [... …])         
          #%datum
          quote
          unquote
