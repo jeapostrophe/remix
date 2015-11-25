@@ -210,7 +210,6 @@
     (pattern x:id
              #:attr λ-arg (syntax x)
              #:attr λ-bind '())
-    ;; xxx write a test for this
     (pattern (~and def-lhs:expr (#%brackets dt . _))
              #:declare dt (static def-transformer? "def transformer")
              #:with x (generate-temporary #'def-lhs)
@@ -269,7 +268,6 @@
        [(_#%dot _λ body:expr)
         (syntax/loc stx
           (remix-cut body))]
-       ;; xxx test this
        [(_#%dot _λ bodies:expr ...)
         (syntax/loc stx
           (remix-cut (#%dot bodies ...)))]))])

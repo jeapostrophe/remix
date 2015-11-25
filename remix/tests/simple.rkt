@@ -251,4 +251,13 @@
 (def [example^ ee] 1)
 (module+ test
   {(ee.f 2) ≡ 1}
-  {(ee.g 2) ≡ 2})
+  {(ee.g 2) ≡ 2}
+  ;; Notice that cut works with nested dots
+  {(λ.example2^.h 'ignored) ≡ 19})
+
+;; This is especially useful inside of functions
+(def (f-using-example [example^ ee])
+  (ee.f 2))
+(module+ test
+  {(f-using-example 1) ≡ 1})
+
