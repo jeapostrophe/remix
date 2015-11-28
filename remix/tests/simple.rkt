@@ -6,7 +6,9 @@
          remix/num/gen0)
 (module+ test
   ;; This introduces ≡ as a testing form
-  ;; XXX Maybe drop this and add a test macro like rackunit/chk
+
+  ;; XXX Maybe drop this and add a test macro like rackunit/chk that
+  ;; looks for comparison forms.
   (require remix/test0))
 
 ;; define is replaced with def
@@ -43,6 +45,9 @@
 ;; cond requires []s for the question-answer pairs. It uses this to
 ;; make any code in between clauses go in between the `if`s that pop
 ;; out of the cond macro. finally, cond REQUIRES a #:else clause.
+;;
+;; XXX potentially make an (impossible!) macro that is a useful
+;; default #:else
 (def (g x)
   (cond
     [(< x 100) "100"]
