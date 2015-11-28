@@ -45,13 +45,7 @@
 
 ;; cond requires []s for the question-answer pairs. It uses this to
 ;; make any code in between clauses go in between the `if`s that pop
-;; out of the cond macro. finally, cond REQUIRES a #:else clause.
-;;
-;; XXX Robby does not like requiring else, but does want a default
-;; error.
-;;
-;; XXX make an (impossible!) macro that is a useful
-;; default #:else
+;; out of the cond macro. 
 (def (g x)
   (cond
     [(< x 100) "100"]
@@ -62,6 +56,25 @@
   {(g 50) ≡ "100"}
   {(g 199) ≡ "div 100"}
   {(g 200) ≡ 100})
+
+;; If cond reaches the end without an else, then a runtime error is
+;; generated
+(def (g2 x)
+  (cond
+    [(< x 100) "100"]
+    (def z (/ x 2))
+    [(< z 100) "div 100"]))
+(module+ test
+  {(g2 50) ≡ "100"}
+  {(g2 199) ≡ "div 100"}
+  ;; This is the error test:
+  #;(g2 200))
+
+;; This functionality is provided by ☠ (aka impossible!)
+(def (g3)
+  ☠)
+(module+ test
+  #;(g3))
 
 ;; the @ reader is always on. One fun thing about this is that you can
 ;; make non-() macros. I wrote a little helper function to turn the

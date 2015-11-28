@@ -5,6 +5,7 @@
                      racket/generic
                      racket/syntax
                      syntax/parse)
+         syntax/quote
          syntax/parse/define
          remix/stx/singleton-struct0
          racket/stxparam)
@@ -63,7 +64,7 @@
       [(_ (((~and (~not #%brackets) x) . args:expr) . def-body:expr) bind-body:expr)
        (syntax/loc stx
          (def*-internal (x (remix-λ args . def-body)) bind-body))]))
-  
+
   (define-syntax (remix-block stx)
     (syntax-parse stx
       #:literals (def*)
@@ -79,7 +80,7 @@
 
   (define-syntax #%brackets
     (make-rename-transformer #'remix-block))
-  
+
   (provide def*
            #%brackets
            (for-syntax def*-transformer?
@@ -286,9 +287,28 @@
                 (syntax-parameterize ([remix-cut-$ (make-rename-transformer #'x)])
                   body)))]))
 
+(define-syntax (impossible! stx)
+  (syntax-parse stx
+    [(_ fun msg loc)
+     (quasisyntax/loc stx
+       (raise-syntax-error fun msg
+                           (quote-syntax/keep-srcloc #,#'loc)))]
+    [_
+     (quasisyntax/loc stx
+       (raise-syntax-error '☠ "Unreachable code has been reached"
+                           (quote-syntax/keep-srcloc #,stx)))]))
+
 (define-syntax (remix-cond stx)
   (syntax-parse stx
     #:literals (#%brackets)
+    [(_ . (~and (cond-arg ...)
+                (_ ... (#%brackets (~not #:else) . _))))
+     (quasisyntax/loc stx
+       (remix-cond cond-arg ...
+                   (#%brackets
+                    #:else (impossible! 'cond
+                                        "non-existent default case reached"
+                                        #,stx))))]
     [(_ (~and before:expr (~not (#%brackets . any:expr))) ...
         (#%brackets #:else . answer-body:expr))
      (syntax/loc stx
@@ -296,23 +316,25 @@
     [(_ (~and before:expr (~not (#%brackets . any:expr))) ...
         (#%brackets question:expr . answer-body:expr)
         . more:expr)
-     (syntax/loc stx
+     (quasisyntax/loc stx
        (remix-block before ...
                     (if question
                         (remix-block . answer-body)
-                        (remix-cond . more))))]))
+                        #,(syntax/loc #'more (remix-cond . more)))))]))
 
 (provide def def*
          (for-syntax gen:def-transformer
                      gen:def*-transformer)
-         (rename-out [def ≙]
+         (rename-out [def ≙] ;; \defs
                      [def :=]
                      [def* ≙*]
                      [def* :=*]
                      [def* nest])
-         (rename-out [remix-λ λ]
+         (rename-out [remix-λ λ] ;; \lambda
                      [remix-cond cond]
                      [remix-cut-$ $])
+         impossible!
+         (rename-out [impossible! ☠])
          #%rest
          (rename-out [remix-block block])
          #%brackets
@@ -324,7 +346,7 @@
          (for-syntax gen:dot-transformer)
          (rename-out [remix-#%app #%app])
          (for-syntax gen:app-dot-transformer)
-         (rename-out [... …])         
+         (rename-out [... …]) ;; \ldots
          #%datum
          quote
          unquote
