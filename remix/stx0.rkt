@@ -169,9 +169,10 @@
 (define-syntax (#%dot stx)
   (syntax-parse stx
     #:literals (#%dot)
-    [(_ x:expr ... (#%dot y:expr ...))
+    [(_ dt x:expr ... (#%dot y:expr ...))
+     #:declare dt (static dot-transformer? "dot transformer")
      (syntax/loc stx
-       (#%dot x ... y ...))]
+       (#%dot dt x ... y ...))]
     [(_ dt . _)
      #:declare dt (static dot-transformer? "dot transformer")
      (dot-transform (attribute dt.value) stx)]))
@@ -184,7 +185,7 @@
     #:literals (#%dot)
     [(_ (~and dot-rator (#%dot x:expr ... (#%dot y:expr ...))) . body:expr)
      (syntax/loc stx
-       (#%app (#%dot x ... y ...) . body))]
+       (remix-#%app (#%dot x ... y ...) . body))]
     [(_ (~and dot-rator (#%dot adt . _)) . body:expr)
      #:declare adt (static app-dot-transformer? "app-dot transformer")
      (app-dot-transform (attribute adt.value) stx)]
@@ -324,7 +325,9 @@
 
 (provide def def*
          (for-syntax gen:def-transformer
-                     gen:def*-transformer)
+                     def-transformer?
+                     gen:def*-transformer
+                     def*-transformer?)
          (rename-out [def ≙] ;; \defs
                      [def :=]
                      [def* ≙*]
@@ -343,9 +346,11 @@
                      binary-operator?
                      binary-operator-precedence)
          #%dot
-         (for-syntax gen:dot-transformer)
+         (for-syntax gen:dot-transformer
+                     dot-transformer?)
          (rename-out [remix-#%app #%app])
-         (for-syntax gen:app-dot-transformer)
+         (for-syntax gen:app-dot-transformer
+                     app-dot-transformer?)
          (rename-out [... …]) ;; \ldots
          #%datum
          quote

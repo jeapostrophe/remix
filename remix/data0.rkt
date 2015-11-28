@@ -6,29 +6,35 @@
           (prefix-in remix: remix/stx0)
           remix/stx/singleton-struct0
           (for-syntax racket/base
-                      syntax/parse))
+                      syntax/parse
+                      (prefix-in remix: remix/stx0)))
          (prefix-in remix: remix/stx0))
 
 (begin-for-syntax
   (define-syntax (static-interface stx)
     (syntax-parse stx
       #:literals (remix:#%brackets)
-      [(_si (remix:#%brackets lhs:id rhs:id) ...)
+      [(_si (remix:#%brackets
+             lhs:id rhs:id
+             (~optional
+              (~seq #:is rhs-dt:id)
+              #:defaults ([rhs-dt #'#f])))
+            ...)
        (with-syntax ([int-name (syntax-local-name)]
                      [(def-rhs ...) (generate-temporaries #'(rhs ...))])
          (syntax/loc stx
            (let ()
-             (define int-id->orig-id
+             (define int-id->orig
                (make-immutable-hasheq
-                (list (cons 'lhs #'rhs)
+                (list (cons 'lhs (cons #'rhs #'rhs-dt))
                       ...)))
              (define available-ids
-               (sort (hash-keys int-id->orig-id)
+               (sort (hash-keys int-id->orig)
                      string<=?
                      #:key symbol->string))
-             (define (get-binding stx x)
+             (define (get-rhs stx x)
                (define xv (syntax->datum x))
-               (hash-ref int-id->orig-id
+               (hash-ref int-id->orig
                          xv
                          (λ ()
                            (raise-syntax-error
@@ -38,6 +44,22 @@
                                     available-ids)
                             stx
                             x))))
+             (define (get-rhs-id stx x)
+               (car (get-rhs stx x)))
+             (define (get-rhs-is stx x)
+               (define r (cdr (get-rhs stx x)))
+               (if (syntax-e r)
+                   r
+                   #f))
+             (define (get-rhs-def stx x-stx)
+               (define xd (get-rhs-is stx x-stx))
+               (with-syntax* ([xb (get-rhs-id stx x-stx)]
+                              [x-def
+                               (if xd xd #'remix:stx)]
+                              [x-def-v
+                               (if xd #'xb #'(make-rename-transformer #'xb))])
+                 (quasisyntax/loc stx
+                   (remix:def (remix:#%brackets x-def #,x-stx) x-def-v))))
              (singleton-struct
               #:property prop:procedure
               (λ (_ stx)
@@ -46,36 +68,36 @@
               [(define (dot-transform _ stx)
                  (syntax-parse stx
                    [(_dot me:id x:id)
-                    (get-binding stx #'x)]
+                    (get-rhs-id stx #'x)]
                    [(_dot me:id x:id . more:expr)
-                    (with-syntax ([xb (get-binding stx #'x)])
-                      (syntax/loc stx
-                        (let-syntax ([x (make-rename-transformer #'xb)])
-                          (remix:#%dot x . more))))]))]
+                    (quasisyntax/loc stx
+                      (remix:block
+                       #,(get-rhs-def stx #'x)
+                       (remix:#%dot x . more)))]))]
               #:methods remix:gen:app-dot-transformer
               [(define (app-dot-transform _ stx)
                  (syntax-parse stx
                    [(_app (_dot me:id x:id) . body:expr)
                     (quasisyntax/loc stx
-                      (#,(get-binding stx #'x) . body))]
+                      (#,(get-rhs-id stx #'x) . body))]
                    [(_app (_dot me:id x:id . more:expr) . body:expr)
-                    (with-syntax ([xb (get-binding stx #'x)])
-                      (syntax/loc stx
-                        (let-syntax ([x (make-rename-transformer #'xb)])
-                          (remix:#%app (remix:#%dot x . more) . body))))]))]
+                    (quasisyntax/loc stx
+                      (remix:block
+                       #,(get-rhs-def stx #'x)
+                       (remix:#%app (remix:#%dot x . more) . body)))]))]
               #:methods remix:gen:def-transformer
               [(define (def-transform _ stx)
                  (syntax-parse stx
                    #:literals (remix:#%brackets)
-                   [(def (remix:#%brackets me:id x:id) . body:expr)
-                    (with-syntax ([real-x (generate-temporary #'x)])
+                   [(def (remix:#%brackets me:id i:id) . body:expr)
+                    (with-syntax ([real-i (generate-temporary #'i)])
                       (syntax/loc stx
                         (begin
-                          (remix:def real-x . body)
+                          (remix:def real-i . body)
                           (remix:def (remix:#%brackets remix:mac (def-rhs . blah:expr))
-                                     (rhs real-x . blah))
+                                     (remix:#%app rhs real-i . blah))
                           ...
-                          (remix:def (remix:#%brackets remix:stx x)
+                          (remix:def (remix:#%brackets remix:stx i)
                                      (static-interface
                                       (remix:#%brackets lhs def-rhs)
                                       ...)))))]))]))))])))

@@ -265,7 +265,9 @@
 (module+ test
   {(example2^.fg.f 1 2) ≡ 1}
   {(example2^.fg.g 1 2) ≡ 2}
-  {example2^.h ≡ 19})
+  {example2^.h ≡ 19}
+  ;; Notice that cut works with nested dots
+  {(λ.example2^.h 'ignored) ≡ 19})
 
 ;; They are also def transformers and when used in that way, they
 ;; implicitly pass the binding on as the first argument to functions
@@ -273,12 +275,25 @@
 (def [example^ ee] 1)
 (module+ test
   {(ee.f 2) ≡ 1}
-  {(ee.g 2) ≡ 2}
-  ;; Notice that cut works with nested dots
-  {(λ.example2^.h 'ignored) ≡ 19})
+  {(ee.g 2) ≡ 2})
 
 ;; This is especially useful inside of functions
 (def (f-using-example [example^ ee])
   (ee.f 2))
 (module+ test
   {(f-using-example 1) ≡ 1})
+
+;; Sometimes a static-interface's binding's result is another
+;; static-interface, rather than the binding itself. In that case, we
+;; use the keyword #:is and specify another def transformer for
+;; contexts where the value is in tail position.
+(def [stx example3^]
+  (static-interface
+   ;; NB Perhaps it would be more punny to us [def id]?
+   [fg example2-fg #:is example^]
+   [h example2-h]))
+(def example2-fg 1)
+(module+ test
+  {(example3^.fg.f 2) ≡ 1}
+  {(example3^.fg.g 2) ≡ 2}
+  {example3^.h ≡ 19})
