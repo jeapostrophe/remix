@@ -1,17 +1,3 @@
-DONE @ everywhere
-
-DONE demonstrate how @ everywhere enables non-() macros like datalog
-
-DONE {} particular => (#%braces)
-
-DONE {} infix
-
-DONE [] particular => (#%brackets)
-
-DONE default #%brackets is (let () ....)
-
-DONE . in ids => x.y => (%#dot x y)
-
 TODO #%dot is extensible transformer
 
 (struct posn ((complex x) y))
@@ -61,7 +47,7 @@ TODO No set! (use data-structure mutation and :=)
 
 TODO No effects or expressions at top-level (controversial, mf says wrong) [set-once!]
 
-DONE "Versioned" libraries
+TODO "Versioned" libraries
 
 TODO Make macros less weird and more like programs, by...
 
@@ -89,20 +75,8 @@ TODO New structs (more reflective information, representation control, sealing)
 
 TODO Implicit units and interfaces (with properties)
 
-DONE Bare-bones /base
-
-#lang racket/base
-(define BASE-NAMES (namespace-mapped-symbols (make-base-namespace)))
-(for ([i (in-list BASE-NAMES)])
-  (displayln i))
-(displayln (length BASE-NAMES))
-
-returns 1433
-
 TODO Generics everywhere
 https://github.com/stamourv/generic-collections
-
-DONE Non-() syntax "mode"
 
 TODO bindings to cooperate with {}
 
@@ -114,33 +88,17 @@ array.[{1 + 1}].(foo)
  {x := z + 13}
  {p.x + p.y})
 
-DONE Implicit nesting in blocks
-  
-  (def (f x)
-   (def y 17)
-   (+ x y))
-
 TODO Immutable strings only
-
-DONE Remove letrec weirdness of define?
-
-(def (f x)
- (def [even (λ (x) (odd x))]
-      [odd (λ (x) (even x))])
- (even x))
 
 TODO "define"-transformers for attaching meta-information to definitions, like documentation, tests, contracts, types, etc
 
 TODO Bindings & keywords everywhere
----- DONE cond
 
 TODO Less representation contraints
 
 TODO Meaningless eq? semantics
 
 TODO Literate programming and inline docs easily
-
-DONE No case-lambda
 
 TODO Optional traditional numbers (num/generic => +)
 
@@ -172,8 +130,6 @@ TODO zos don't appear to users (switch to interp if no write access)
 
 TODO only use syntax-parse and define-simple-macro
 
-DONE use \ldots as ...
-
 TODO add a threading macro
 
 TODO types and other information in syntax-local-value
@@ -183,11 +139,6 @@ TODO support :keyword (and keyword:?)
 TODO @literate
 
 TODO @docs
-
-DONE [] for Rec def blocks or def* for let* behavior
-     and Search for def in block and trans to local-def which sees body
-
-DONE [] for def & def* transformer
 
 TODO Meta def & def* trans for more expansion (docs and test), static
 info (types), and def transformers (types), maybe syntax ---
@@ -205,14 +156,7 @@ TODO greg's defs
 https://github.com/greghendershott/defn
 https://github.com/greghendershott/def-jambda
 
-DONE nest form like def* for things like parameterize that would look
-weird as def* transformers
-
-DONE stx def transfomer
-
 TODO fun def transformer
-
-DONE mac def transformer (simple-macro)
 
 TODO mac def+ transformer (syntax-parser)
 
