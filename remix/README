@@ -196,6 +196,8 @@ transformer (can change define to define-syntax/etc) vs expander
 functions!
 --- See https://mail.google.com/mail/u/0/#inbox/1513f480b3313fb2
 
+TODO how to make sure cases of cond/etc are complete?
+
 TODO operator overloading definitions of + and ones that check the
 types for float/int/fixnum/etc
 

@@ -306,7 +306,9 @@
          (for-syntax gen:def-transformer
                      gen:def*-transformer)
          (rename-out [def ≙]
+                     [def :=]
                      [def* ≙*]
+                     [def* :=*]
                      [def* nest])
          (rename-out [remix-λ λ]
                      [remix-cond cond]

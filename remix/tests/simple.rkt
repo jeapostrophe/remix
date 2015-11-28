@@ -7,8 +7,9 @@
 (module+ test
   ;; This introduces ≡ as a testing form
 
-  ;; XXX Maybe drop this and add a test macro like rackunit/chk that
-  ;; looks for comparison forms.
+  ;; XXX Drop this and instead have a macro for writing down
+  ;; properties that communicates with boolean forms, etc. Supports ∀,
+  ;; etc.
   (require remix/test0))
 
 ;; define is replaced with def
@@ -46,7 +47,10 @@
 ;; make any code in between clauses go in between the `if`s that pop
 ;; out of the cond macro. finally, cond REQUIRES a #:else clause.
 ;;
-;; XXX potentially make an (impossible!) macro that is a useful
+;; XXX Robby does not like requiring else, but does want a default
+;; error.
+;;
+;; XXX make an (impossible!) macro that is a useful
 ;; default #:else
 (def (g x)
   (cond
@@ -147,11 +151,13 @@
 (module+ test
   {v11c ≡ 11})
 
-;; ≙ is a synonym for def, and because of the {} rules, is a binary
-;; operator.
-{v33 ≙ 33}
+;; ≙ and := are synonyms for def, and because of the {} rules, is a
+;; binary operator.
+{v33a ≙ 33}
+{v33b := 33}
 (module+ test
-  {v33 ≡ 33})
+  {v33a ≡ 33}
+  {v33b ≡ 33})
 
 (def v28
   {(f x) ≙ x + x}
