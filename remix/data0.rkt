@@ -25,8 +25,8 @@
   (require (submod "." interface-member)
            (for-syntax
             (submod "." interface-member)))
-  
-  (define-syntax (:static-interface stx)
+
+  (define-syntax (phase1:static-interface stx)
     (syntax-parse stx
       #:literals (remix:#%brackets)
       [(_si (remix:#%brackets
@@ -75,6 +75,8 @@
                                (if xd #'xb #'(make-rename-transformer #'xb))])
                  (quasisyntax/loc stx
                    (remix:def (remix:#%brackets x-def #,x-stx) x-def-v))))
+             ;; XXX add the ability to add other properties,
+             ;; interfaces, etc.
              (singleton-struct
               #:property prop:procedure
               (λ (_ stx)
@@ -116,10 +118,26 @@
                                      (remix:#%app rhs real-i . blah))
                           ...
                           (remix:def (remix:#%brackets remix:stx i)
-                                     (:static-interface
+                                     (phase1:static-interface
                                       (remix:#%brackets lhs def-rhs)
                                       ...)))))]))]))))])))
 
-(provide (for-syntax (rename-out [:static-interface static-interface])
+(define-syntax phase0:static-interface
+  (singleton-struct
+   #:property prop:procedure
+   (λ (_ stx)
+     (raise-syntax-error 'static-interface "Illegal outside def" stx))
+   #:methods remix:gen:def-transformer
+   [(define (def-transform _ stx)
+      (syntax-parse stx
+        #:literals (remix:#%brackets)
+        [(def (remix:#%brackets me:id i:id) . body:expr)
+         (syntax/loc stx
+           (remix:def (remix:#%brackets remix:stx i)
+                      (phase1:static-interface . body)))]))]))
+
+
+(provide (rename-out [phase0:static-interface static-interface])
+         (for-syntax (rename-out [phase1:static-interface static-interface])
                      gen:static-interface
                      static-interface?))

@@ -299,13 +299,15 @@
   {example3^.h ≡ 19})
 
 ;; The syntax of interface members is not limited to identifiers. In
-;; particular, #:keywords are useful.
+;; particular, #:keywords are useful. Furthermore, static-interface is
+;; a def transformer itself, to clean up the syntax a little bit. I
+;; expect that most people will use it this way.
 (def example4-kw-key '#:key)
 (def example4-key 'key)
-(def [stx example4^]
-  (static-interface
-   [#:key example4-kw-key]
-   [key example4-key]))
+(def [static-interface example4^]
+  [#:key example4-kw-key]
+  [key example4-key])
 (module+ test
   {example4^.#:key ≡ '#:key}
   {example4^.key ≡ 'key})
+
