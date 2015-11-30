@@ -327,19 +327,19 @@
   x y)
 (module+ test
   ;; You will get an allocation function named #:alloc
-  (def p1 (posn.#:alloc [x 5] [y 7]))
+  (def [posn p1] (posn.#:alloc [x 5] [y 7]))
   ;; And accessors
   {p1.x ≡ 5}
   {p1.y ≡ 7}
   ;; You will also get a copying function (XXX: Should it be named
   ;; `copy`? `update`? My analogy here is with hash-set)
-  (def p2 (p1.#:set [x 8] [y {p1.y + 2}]))
+  (def [posn p2] (p1.#:set [x 8] [y {p1.y + 2}]))
   ;; Notice that these built-in functions are keywords, so that they
   ;; can't conflict with the fields you've defined.
   {p2.x ≡ 8}
   {p2.y ≡ 9}
   ;; This is aliased to =, which I expect is nicer to use.
-  (def p3 (p1.#:= [x 8] [y {p1.y + 2}]))
+  (def [posn p3] (p1.#:= [x 8] [y {p1.y + 2}]))
   {p3.x ≡ 8}
   {p3.y ≡ 9})
 

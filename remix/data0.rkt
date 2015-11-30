@@ -5,6 +5,7 @@
           racket/syntax
           racket/generic
           racket/format
+          racket/list
           (prefix-in remix: remix/stx0)
           remix/stx/singleton-struct0
           (for-syntax racket/base
@@ -42,8 +43,14 @@
              (~seq #:extensions
                    extension ...)
              #:defaults ([[extension 1] '()])))
-       (with-syntax ([int-name (syntax-local-name)]
-                     [(def-rhs ...) (generate-temporaries #'(rhs ...))])
+       (with-syntax* ([int-name (or (syntax-local-name) 'static-interface)]
+                      [(def-rhs ...)
+                       (for/list ([lhs (in-list
+                                        (map syntax->datum
+                                             (syntax->list #'(lhs ...))))])
+                         (format-id #f "~a-~a-for-def" #'int-name
+                                    (if (keyword? lhs) (keyword->string lhs)
+                                        lhs)))])
          (syntax/loc stx
            (let ()
              (define int-id->orig
@@ -120,8 +127,15 @@
                       (syntax/loc stx
                         (begin
                           (remix:def real-i . body)
-                          (remix:def (remix:#%brackets remix:mac (def-rhs . blah:expr))
-                                     (remix:#%app rhs real-i . blah))
+                          (remix:def (remix:#%brackets remix:stx def-rhs)
+                                     (λ (stx)
+                                       (syntax-parse stx
+                                         [_:id
+                                          (syntax/loc stx
+                                            (rhs real-i))]
+                                         [(_ . blah:expr)
+                                          (syntax/loc stx
+                                            (rhs real-i . blah))])))
                           ...
                           (remix:def (remix:#%brackets remix:stx i)
                                      (phase1:static-interface
@@ -179,13 +193,67 @@
                                     [f (in-list (syntax->list #'(f ...)))])
                            i)]
                         [(name-f ...)
-                         (generate-temporaries #'(f ...))])
+                         (for/list ([f (in-list (syntax->list #'(f ...)))])
+                           (format-id #f "~a-~a" #'name f))])
            (syntax/loc stx
              (begin
+               (begin-for-syntax
+                 (define f->idx*acc
+                   (make-immutable-hasheq
+                    (list (cons 'f (cons f-idx #'name-f))
+                          ...)))
+                 (define available-fields
+                   (sort (hash-keys f->idx*acc)
+                         string<=?
+                         #:key symbol->string))
+                 (define-syntax-class name-arg
+                   #:attributes (lhs rhs)
+                   #:literals (remix:#%brackets)
+                   (pattern (remix:#%brackets lhs:id rhs:expr)
+                            #:fail-unless
+                            (hash-has-key? f->idx*acc (syntax->datum #'lhs))
+                            (format "valid field: ~a" available-fields)))
+                 (define-syntax-class name-args
+                   #:attributes (f->rhs)
+                   (pattern (a:name-arg (... ...))
+                            #:do [(define first-dupe
+                                    (check-duplicates
+                                     (syntax->datum #'(a.lhs (... ...)))))]
+                            #:fail-when first-dupe
+                            (format "field occurs twice: ~a" first-dupe)
+                            #:attr f->rhs
+                            (for/hasheq ([l (syntax->list #'(a.lhs (... ...)))]
+                                         [r (syntax->list #'(a.rhs (... ...)))])
+                              (values (syntax->datum l) r)))))
                (define-syntax (name-alloc stx)
-                 (raise-syntax-error 'name-alloc "XXX alloc"))
+                 (syntax-parse stx
+                   [(_ . args:name-args)
+                    (with-syntax ([(f-val (... ...))
+                                   (for/list ([this-f (in-list '(f ...))])
+                                     (hash-ref (attribute args.f->rhs)
+                                               this-f
+                                               (λ ()
+                                                 (raise-syntax-error
+                                                  'name-alloc
+                                                  "missing initializer for ~a"
+                                                  this-f))))])
+                      (syntax/loc stx
+                        (vector-immutable f-val (... ...))))]))
                (define-syntax (name-set stx)
-                 (raise-syntax-error 'name-set "XXX set"))
+                 (syntax-parse stx
+                   [(_ base:expr . args:name-args)
+                    (with-syntax* ([base-id (generate-temporary #'base)]
+                                   [(f-val (... ...))
+                                    (for/list ([this-f (in-list '(f ...))]
+                                               [this-name-f (in-list '(name-f ...))])
+                                      (hash-ref (attribute args.f->rhs)
+                                                this-f
+                                                (λ ()
+                                                  (quasisyntax/loc stx
+                                                    (#,this-name-f base-id)))))])
+                      (syntax/loc stx
+                        (let ([base-id base])
+                          (vector-immutable f-val (... ...)))))]))
                (begin-encourage-inline
                  (define (name-f v) (unsafe-vector*-ref v f-idx))
                  ...)
