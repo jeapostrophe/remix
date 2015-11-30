@@ -298,6 +298,9 @@
   {(example3^.fg.g 2) ≡ 2}
   {example3^.h ≡ 19})
 
+;; XXX show an example where it isn't an interface but any def
+;; transformer.
+
 ;; The syntax of interface members is not limited to identifiers. In
 ;; particular, #:keywords are useful. Furthermore, static-interface is
 ;; a def transformer itself, to clean up the syntax a little bit. I
@@ -311,3 +314,85 @@
   {example4^.#:key ≡ '#:key}
   {example4^.key ≡ 'key})
 
+;; A layout is a container with no sealing or representation
+;; guarantees. This means you can't necessarily protect the contents
+;; nor can you necessarily tell that you have one when you do.
+
+;; layout is a def-transformer (XXX I wish I could make it phase1
+;; macro also but it needs to define some functions that could be
+;; called)
+
+;; The most basic syntax is a list of fields, which are identifiers.
+(def [layout posn]
+  x y)
+(module+ test
+  ;; You will get an allocation function named #:alloc
+  (def p1 (posn.#:alloc [x 5] [y 7]))
+  ;; And accessors
+  {p1.x ≡ 5}
+  {p1.y ≡ 7}
+  ;; You will also get a copying function (XXX: Should it be named
+  ;; `copy`? `update`? My analogy here is with hash-set)
+  (def p2 (p1.#:set [x 8] [y {p1.y + 2}]))
+  ;; Notice that these built-in functions are keywords, so that they
+  ;; can't conflict with the fields you've defined.
+  {p2.x ≡ 8}
+  {p2.y ≡ 9}
+  ;; This is aliased to =, which I expect is nicer to use.
+  (def p3 (p1.#:= [x 8] [y {p1.y + 2}]))
+  {p3.x ≡ 8}
+  {p3.y ≡ 9})
+
+;; A layout can have a parent, which provides the guarantee that the
+;; parent's functions will work on the child. A layout has one or zero
+;; parents.
+#;
+(def [layout quat]
+  #:parent posn
+  z)
+
+;; A layout's fields may be specified as other layouts. When the first
+;; field is a layout, this is not necessarily the same thing as a
+;; parent (like C structs) but it may be.
+#;
+(def [layout circle]
+  [posn cx] r)
+
+;; A layout's fields can _actually_ just be any def transformer, and
+;; thus could be static interfaces
+#;
+(def [layout weird]
+  [example1^ e])
+
+;; Now, the big reveal, layout has an extensible representation
+;; planner system. At the moment, the only representations are
+;;
+;; layout-immutable : The default, backed by immutable vectors 
+;; layout-mutable   : Backed by mutable vectors, with mutation support
+;;
+;; I expect to produce a few more
+;;
+;; (XXX) layout-c        : Compatible with C
+;; (XXX) layout-optimize : Optimize for removing padding and have
+;;                         cache-line-aligned accesses
+;;
+;; It would be possible to make layout-c right now, but define-cstruct
+;; is really slow. It is trivial to have layout-optimize if you have
+;; layout-c, but it would not be useful to use. mflatt and I talked
+;; about a fast way of implementing them in Racket. The basic idea is
+;; to have a new type of object in the VM where the pointer goes to
+;; the middle of the allocated space which looks like
+;;
+;; [ <raw-values> | <tag> <vector layout> ]
+;;
+;; There may be necessary padding, but then the existing vector
+;; functions would work. The raw values would use computed offsets to
+;; get the values. The goal would be that parent structs would just
+;; work and it would be easy to pass to C by sorting the _racket
+;; pointers to the end.
+;;
+;; Anyways, here's a mutable example.
+#;
+(def [layout world]
+  #:rep layout-mutable
+  [circle c1] [circle c2])

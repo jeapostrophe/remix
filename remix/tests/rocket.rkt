@@ -15,7 +15,7 @@
   (#rocket.alloc [h h] [dh dh]))
  #:implements world/anim^
  (def (tick)
-  (r.= [h {r.h + r.dh}]))
+   (r.= [h {r.h + r.dh}]))
  (def (draw)
   (circle 'yellow 5)))
 

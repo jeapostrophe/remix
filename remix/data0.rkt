@@ -8,8 +8,11 @@
           (prefix-in remix: remix/stx0)
           remix/stx/singleton-struct0
           (for-syntax racket/base
+                      racket/syntax
                       syntax/parse
                       (prefix-in remix: remix/stx0)))
+         racket/unsafe/ops
+         racket/performance-hint
          (prefix-in remix: remix/stx0))
 
 (begin-for-syntax
@@ -34,7 +37,11 @@
              (~optional
               (~seq #:is rhs-dt:id)
               #:defaults ([rhs-dt #'#f])))
-            ...)
+            ...
+            (~optional
+             (~seq #:extensions
+                   extension ...)
+             #:defaults ([[extension 1] '()])))
        (with-syntax ([int-name (syntax-local-name)]
                      [(def-rhs ...) (generate-temporaries #'(rhs ...))])
          (syntax/loc stx
@@ -75,9 +82,8 @@
                                (if xd #'xb #'(make-rename-transformer #'xb))])
                  (quasisyntax/loc stx
                    (remix:def (remix:#%brackets x-def #,x-stx) x-def-v))))
-             ;; XXX add the ability to add other properties,
-             ;; interfaces, etc.
              (singleton-struct
+              ;; XXX some way to overload this with #:extensions
               #:property prop:procedure
               (λ (_ stx)
                 (raise-syntax-error 'int-name "Illegal in expression context" stx))
@@ -120,24 +126,80 @@
                           (remix:def (remix:#%brackets remix:stx i)
                                      (phase1:static-interface
                                       (remix:#%brackets lhs def-rhs)
-                                      ...)))))]))]))))])))
+                                      ...)))))]))]
+              extension ...))))])))
 
-(define-syntax phase0:static-interface
-  (singleton-struct
-   #:property prop:procedure
-   (λ (_ stx)
-     (raise-syntax-error 'static-interface "Illegal outside def" stx))
-   #:methods remix:gen:def-transformer
-   [(define (def-transform _ stx)
-      (syntax-parse stx
-        #:literals (remix:#%brackets)
-        [(def (remix:#%brackets me:id i:id) . body:expr)
-         (syntax/loc stx
-           (remix:def (remix:#%brackets remix:stx i)
-                      (phase1:static-interface . body)))]))]))
+(define-syntax (define-phase0-def->phase1-macro stx)
+  (syntax-parse stx
+    [(_ base:id)
+     (with-syntax ([phase0:base (format-id #'base "phase0:~a" #'base)]
+                   [phase1:base (format-id #'base "phase1:~a" #'base)])
+       (syntax/loc stx
+         (define-syntax phase0:base
+           (singleton-struct
+            #:property prop:procedure
+            (λ (_ stx)
+              (raise-syntax-error 'base "Illegal outside def" stx))
+            #:methods remix:gen:def-transformer
+            [(define (def-transform _ stx)
+               (syntax-parse stx
+                 #:literals (remix:#%brackets)
+                 [(def (remix:#%brackets me:id i:id) . body:expr)
+                  (syntax/loc stx
+                    (remix:def (remix:#%brackets remix:stx i)
+                               (phase1:base . body)))]))]))))]))
 
+(define-phase0-def->phase1-macro static-interface)
 
 (provide (rename-out [phase0:static-interface static-interface])
          (for-syntax (rename-out [phase1:static-interface static-interface])
                      gen:static-interface
-                     static-interface?))
+                     static-interface?
+                     static-interface-members))
+
+(begin-for-syntax
+  ;; XXX fill this in
+  (define-generics layout))
+
+(define-syntax phase0:layout
+  (singleton-struct
+   #:property prop:procedure
+   (λ (_ stx)
+     (raise-syntax-error 'layout "Illegal outside def" stx))
+   #:methods remix:gen:def-transformer
+   [(define (def-transform _ stx)
+      (syntax-parse stx
+        #:literals (remix:#%brackets)
+        [(def (remix:#%brackets me:id name:id)
+           f:id ...)
+         (with-syntax* ([name-alloc (format-id #f "~a-alloc" #'name)]
+                        [name-set (format-id #f "~a-set" #'name)]
+                        [(f-idx ...)
+                         (for/list ([i (in-naturals)]
+                                    [f (in-list (syntax->list #'(f ...)))])
+                           i)]
+                        [(name-f ...)
+                         (generate-temporaries #'(f ...))])
+           (syntax/loc stx
+             (begin
+               (define-syntax (name-alloc stx)
+                 (raise-syntax-error 'name-alloc "XXX alloc"))
+               (define-syntax (name-set stx)
+                 (raise-syntax-error 'name-set "XXX set"))
+               (begin-encourage-inline
+                 (define (name-f v) (unsafe-vector*-ref v f-idx))
+                 ...)
+               (define-syntax name
+                 (phase1:static-interface
+                  (remix:#%brackets #:alloc name-alloc)
+                  (remix:#%brackets #:set name-set)
+                  (remix:#%brackets #:= name-set)
+                  (remix:#%brackets f name-f)
+                  ...
+                  #:extensions
+                  #:methods gen:layout
+                  [])))))]))]))
+
+(provide (rename-out [phase0:layout layout])
+         (for-syntax gen:layout
+                     layout?))
