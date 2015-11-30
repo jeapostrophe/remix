@@ -333,19 +333,22 @@
   {p1.y ≡ 7}
   ;; You will also get a copying function (XXX: Should it be named
   ;; `copy`? `update`? My analogy here is with hash-set)
-  (def [posn p2] (p1.#:set [x 8] [y {p1.y + 2}]))
+  (def [posn p2] (p1.#:set [y {p1.y + 2}]))
   ;; Notice that these built-in functions are keywords, so that they
   ;; can't conflict with the fields you've defined.
-  {p2.x ≡ 8}
+  {p2.x ≡ 5}
   {p2.y ≡ 9}
   ;; This is aliased to =, which I expect is nicer to use.
-  (def [posn p3] (p1.#:= [x 8] [y {p1.y + 2}]))
+  (def [posn p3] (p1.#:= [x 8]))
   {p3.x ≡ 8}
-  {p3.y ≡ 9})
+  {p3.y ≡ 7})
+
+;; XXX This is where I am
 
 ;; A layout can have a parent, which provides the guarantee that the
-;; parent's functions will work on the child. A layout has one or zero
-;; parents.
+;; parent's functions will work on the child---meaning that whatever
+;; the layout ends up being (and you can't decide that), the two will
+;; overlap in this specific way. A layout has one or zero parents.
 #;
 (def [layout quat]
   #:parent posn
@@ -353,7 +356,9 @@
 
 ;; A layout's fields may be specified as other layouts. When the first
 ;; field is a layout, this is not necessarily the same thing as a
-;; parent (like C structs) but it may be.
+;; parent (like C structs) but it may be. (No matter what, you'd never
+;; be able to tell, since layout doesn't make representation promises
+;; as a rule.)
 #;
 (def [layout circle]
   [posn cx] r)

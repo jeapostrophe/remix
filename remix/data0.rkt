@@ -172,7 +172,7 @@
                      static-interface-members))
 
 (begin-for-syntax
-  ;; XXX fill this in
+  ;; XXX fill this in for parents, etc
   (define-generics layout))
 
 (define-syntax phase0:layout
@@ -186,6 +186,7 @@
         #:literals (remix:#%brackets)
         [(def (remix:#%brackets me:id name:id)
            f:id ...)
+         ;; xxx check for duplicates in f
          (with-syntax* ([name-alloc (format-id #f "~a-alloc" #'name)]
                         [name-set (format-id #f "~a-set" #'name)]
                         [(f-idx ...)
@@ -199,6 +200,7 @@
              (begin
                (begin-for-syntax
                  (define f->idx*acc
+                   ;; xxx base on parent's
                    (make-immutable-hasheq
                     (list (cons 'f (cons f-idx #'name-f))
                           ...)))
@@ -235,9 +237,11 @@
                                                (λ ()
                                                  (raise-syntax-error
                                                   'name-alloc
-                                                  "missing initializer for ~a"
-                                                  this-f))))])
+                                                  (format "missing initializer for ~a"
+                                                          this-f)
+                                                  stx))))])
                       (syntax/loc stx
+                        ;; xxx push this in representation planner
                         (vector-immutable f-val (... ...))))]))
                (define-syntax (name-set stx)
                  (syntax-parse stx
@@ -253,8 +257,10 @@
                                                     (#,this-name-f base-id)))))])
                       (syntax/loc stx
                         (let ([base-id base])
+                          ;; xxx push this in representation planner
                           (vector-immutable f-val (... ...)))))]))
                (begin-encourage-inline
+                 ;; xxx push this in representation planner
                  (define (name-f v) (unsafe-vector*-ref v f-idx))
                  ...)
                (define-syntax name
@@ -262,6 +268,7 @@
                   (remix:#%brackets #:alloc name-alloc)
                   (remix:#%brackets #:set name-set)
                   (remix:#%brackets #:= name-set)
+                  ;; xxx add set! if planner says so
                   (remix:#%brackets f name-f)
                   ...
                   #:extensions
