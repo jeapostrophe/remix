@@ -297,3 +297,15 @@
   {(example3^.fg.f 2) ≡ 1}
   {(example3^.fg.g 2) ≡ 2}
   {example3^.h ≡ 19})
+
+;; The syntax of interface members is not limited to identifiers. In
+;; particular, #:keywords are useful.
+(def example4-kw-key '#:key)
+(def example4-key 'key)
+(def [stx example4^]
+  (static-interface
+   [#:key example4-kw-key]
+   [key example4-key]))
+(module+ test
+  {example4^.#:key ≡ '#:key}
+  {example4^.key ≡ 'key})

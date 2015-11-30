@@ -149,6 +149,12 @@ functions!
 
 TODO how to make sure cases of cond/etc are complete?
 
+A bare minimum dynamic solution is to do a module-lift to a test
+property that use enumeration to enumerate inputs and that sort of
+thing. A bare minimum static solution is to have the data and the
+variants and a mapping between cases and the variants. It may require
+too much knowledge on the data structure than is Rackety.
+
 TODO operator overloading definitions of + and ones that check the
 types for float/int/fixnum/etc
 

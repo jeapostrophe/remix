@@ -3,6 +3,8 @@
           racket/base
           syntax/parse
           racket/syntax
+          racket/generic
+          racket/format
           (prefix-in remix: remix/stx0)
           remix/stx/singleton-struct0
           (for-syntax racket/base
@@ -11,11 +13,24 @@
          (prefix-in remix: remix/stx0))
 
 (begin-for-syntax
-  (define-syntax (static-interface stx)
+  (define-generics static-interface
+    (static-interface-members static-interface))
+
+  (module interface-member racket/base
+    (require syntax/parse)
+    (define-syntax-class interface-member
+      (pattern x:id)
+      (pattern x:keyword))
+    (provide interface-member))
+  (require (submod "." interface-member)
+           (for-syntax
+            (submod "." interface-member)))
+  
+  (define-syntax (:static-interface stx)
     (syntax-parse stx
       #:literals (remix:#%brackets)
       [(_si (remix:#%brackets
-             lhs:id rhs:id
+             lhs:interface-member rhs:id
              (~optional
               (~seq #:is rhs-dt:id)
               #:defaults ([rhs-dt #'#f])))
@@ -31,7 +46,7 @@
              (define available-ids
                (sort (hash-keys int-id->orig)
                      string<=?
-                     #:key symbol->string))
+                     #:key ~a))
              (define (get-rhs stx x)
                (define xv (syntax->datum x))
                (hash-ref int-id->orig
@@ -64,12 +79,15 @@
               #:property prop:procedure
               (λ (_ stx)
                 (raise-syntax-error 'int-name "Illegal in expression context" stx))
+              #:methods gen:static-interface
+              [(define (static-interface-members _)
+                 available-ids)]
               #:methods remix:gen:dot-transformer
               [(define (dot-transform _ stx)
                  (syntax-parse stx
-                   [(_dot me:id x:id)
+                   [(_dot me:id x:interface-member)
                     (get-rhs-id stx #'x)]
-                   [(_dot me:id x:id . more:expr)
+                   [(_dot me:id x:interface-member . more:expr)
                     (quasisyntax/loc stx
                       (remix:block
                        #,(get-rhs-def stx #'x)
@@ -77,10 +95,10 @@
               #:methods remix:gen:app-dot-transformer
               [(define (app-dot-transform _ stx)
                  (syntax-parse stx
-                   [(_app (_dot me:id x:id) . body:expr)
+                   [(_app (_dot me:id x:interface-member) . body:expr)
                     (quasisyntax/loc stx
                       (#,(get-rhs-id stx #'x) . body))]
-                   [(_app (_dot me:id x:id . more:expr) . body:expr)
+                   [(_app (_dot me:id x:interface-member . more:expr) . body:expr)
                     (quasisyntax/loc stx
                       (remix:block
                        #,(get-rhs-def stx #'x)
@@ -98,8 +116,10 @@
                                      (remix:#%app rhs real-i . blah))
                           ...
                           (remix:def (remix:#%brackets remix:stx i)
-                                     (static-interface
+                                     (:static-interface
                                       (remix:#%brackets lhs def-rhs)
                                       ...)))))]))]))))])))
 
-(provide (for-syntax static-interface))
+(provide (for-syntax (rename-out [:static-interface static-interface])
+                     gen:static-interface
+                     static-interface?))
