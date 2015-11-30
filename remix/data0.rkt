@@ -11,6 +11,7 @@
           (for-syntax racket/base
                       racket/syntax
                       syntax/parse
+                      racket/generic
                       (prefix-in remix: remix/stx0)))
          racket/unsafe/ops
          racket/performance-hint
@@ -90,10 +91,6 @@
                  (quasisyntax/loc stx
                    (remix:def (remix:#%brackets x-def #,x-stx) x-def-v))))
              (singleton-struct
-              ;; XXX some way to overload this with #:extensions
-              #:property prop:procedure
-              (λ (_ stx)
-                (raise-syntax-error 'int-name "Illegal in expression context" stx))
               #:methods gen:static-interface
               [(define (static-interface-members _)
                  available-ids)]
@@ -140,7 +137,22 @@
                           (remix:def (remix:#%brackets remix:stx i)
                                      (phase1:static-interface
                                       (remix:#%brackets lhs def-rhs)
-                                      ...)))))]))]
+                                      ...
+                                      #:extensions
+                                      ;; NB I don't pass on other
+                                      ;; extensions... I don't think
+                                      ;; it can possibly make sense,
+                                      ;; because I don't know what
+                                      ;; they might be.
+                                      #:property prop:procedure
+                                      (λ (_ stx)
+                                       (syntax-parse stx
+                                         [_:id
+                                          (syntax/loc stx
+                                            real-i)]
+                                         [(_ . blah:expr)
+                                          (syntax/loc stx
+                                            (real-i . blah))])))))))]))]
               extension ...))))])))
 
 (define-syntax (define-phase0-def->phase1-macro stx)
@@ -173,7 +185,18 @@
 
 (begin-for-syntax
   ;; XXX fill this in for parents, etc
-  (define-generics layout))
+  (define-generics layout)
+  (begin-for-syntax
+    (define-generics layout-planner
+      (layout-planner-mutable? layout-planner)))
+  (define-syntax layout-immutable
+    (singleton-struct
+     #:methods gen:layout-planner
+     [(define (layout-planner-mutable? lp) #f)]))
+  (define-syntax layout-mutable
+    (singleton-struct
+     #:methods gen:layout-planner
+     [(define (layout-planner-mutable? lp) #t)])))
 
 (define-syntax phase0:layout
   (singleton-struct
@@ -276,5 +299,15 @@
                   [])))))]))]))
 
 (provide (rename-out [phase0:layout layout])
+         (for-meta 2
+                   gen:layout-planner
+                   layout-planner?
+                   layout-planner-mutable?)
          (for-syntax gen:layout
-                     layout?))
+                     layout?
+                     layout-immutable
+                     layout-mutable))
+
+;; xxx (dynamic-)interface
+;; xxx data
+

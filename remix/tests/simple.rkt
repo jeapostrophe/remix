@@ -331,6 +331,10 @@
   ;; And accessors
   {p1.x ≡ 5}
   {p1.y ≡ 7}
+  ;; You may not have noticed, but posn was just a def transformer
+  ;; that gave us access to these. We can, of course, just call them
+  ;; directly through posn.
+  {(posn.x p1) ≡ 5}
   ;; You will also get a copying function (XXX: Should it be named
   ;; `copy`? `update`? My analogy here is with hash-set)
   (def [posn p2] (p1.#:set [y {p1.y + 2}]))
@@ -361,7 +365,7 @@
 ;; as a rule.)
 #;
 (def [layout circle]
-  [posn cx] r)
+  [posn c] r)
 
 ;; A layout's fields can _actually_ just be any def transformer, and
 ;; thus could be static interfaces
