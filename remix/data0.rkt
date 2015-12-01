@@ -1,11 +1,13 @@
 #lang racket/base
 (require (for-syntax
           racket/base
+          syntax/quote
           syntax/parse
           racket/syntax
           racket/generic
           racket/format
           racket/list
+          racket/match
           (prefix-in remix: remix/stx0)
           remix/stx/singleton-struct0
           (for-syntax racket/base
@@ -185,7 +187,11 @@
 
 (begin-for-syntax
   ;; XXX fill this in for parents, etc
-  (define-generics layout)
+  (define-generics layout
+    (layout-planner layout)
+    ;; xxx the accessors seem to not be around anyways, so instead,
+    ;; this should just be a mapping produced by the planner.
+    (layout-field->acc layout))
   (begin-for-syntax
     (define-generics layout-planner
       (layout-planner-mutable? layout-planner)))
@@ -208,36 +214,62 @@
       (syntax-parse stx
         #:literals (remix:#%brackets)
         [(def (remix:#%brackets me:id name:id)
+           (~optional (~and (~seq #:parent (~var parent (static layout? "layout")))
+                            (~bind [parent-va (attribute parent.value)]))
+                      #:defaults ([parent-va #f]))
            f:id ...)
-         ;; xxx check for duplicates in f
+         (define parent-v (attribute parent-va))
+         (define the-planner
+           (or (and parent-v (layout-planner parent-v))
+               ;; xxx allow the default planner to be customized and
+               ;; ensure it is equal to the parent's
+               #'layout-immutable))
+         (define parent-f->acc
+           (or (and parent-v (layout-field->acc parent-v))
+               (hasheq)))
+         (define f->acc
+           (for/fold ([base parent-f->acc])
+                     ([the-f (in-list (syntax->datum #'(f ...)))]
+                      [the-idx (in-naturals (hash-count parent-f->acc))])
+             (when (hash-has-key? base the-f)
+               (raise-syntax-error 'layout
+                                   (format "duplicate field ~a in layout"
+                                           the-f)
+                                   stx
+                                   the-f))
+             (define the-name-f (format-id #f "~a-~a" #'name the-f))
+             (hash-set base the-f (cons the-name-f the-idx))))
          (with-syntax* ([name-alloc (format-id #f "~a-alloc" #'name)]
                         [name-set (format-id #f "~a-set" #'name)]
-                        [(f-idx ...)
-                         (for/list ([i (in-naturals)]
-                                    [f (in-list (syntax->list #'(f ...)))])
-                           i)]
-                        [(name-f ...)
-                         (for/list ([f (in-list (syntax->list #'(f ...)))])
-                           (format-id #f "~a-~a" #'name f))])
+                        [((all-f all-name-f all-f-idx) ...)
+                         (for/list ([(the-f v) (in-hash f->acc)])
+                           (match-define (cons the-name-f the-f-idx) v)
+                           (list the-f the-name-f the-f-idx))]
+                        [stx-the-planner the-planner]
+                        [stx-f->acc f->acc])
            (syntax/loc stx
              (begin
                (begin-for-syntax
-                 (define f->idx*acc
-                   ;; xxx base on parent's
-                   (make-immutable-hasheq
-                    (list (cons 'f (cons f-idx #'name-f))
-                          ...)))
+                 (define f->acc stx-f->acc)
                  (define available-fields
-                   (sort (hash-keys f->idx*acc)
+                   (sort (hash-keys f->acc)
                          string<=?
                          #:key symbol->string))
+                 (define ordered-fields
+                   (sort (hash-keys f->acc)
+                         <=
+                         #:key (λ (x)
+                                 (cdr (hash-ref f->acc x)))))
                  (define-syntax-class name-arg
                    #:attributes (lhs rhs)
                    #:literals (remix:#%brackets)
                    (pattern (remix:#%brackets lhs:id rhs:expr)
+                            #:do [(define lhs-v (syntax->datum #'lhs))]
                             #:fail-unless
-                            (hash-has-key? f->idx*acc (syntax->datum #'lhs))
-                            (format "valid field: ~a" available-fields)))
+                            (hash-has-key? f->acc lhs-v)
+                            (format "invalid field given: ~a, valid fields are: ~a"
+                                    lhs-v
+                                    available-fields)))
                  (define-syntax-class name-args
                    #:attributes (f->rhs)
                    (pattern (a:name-arg (... ...))
@@ -254,7 +286,7 @@
                  (syntax-parse stx
                    [(_ . args:name-args)
                     (with-syntax ([(f-val (... ...))
-                                   (for/list ([this-f (in-list '(f ...))])
+                                   (for/list ([this-f (in-list ordered-fields)])
                                      (hash-ref (attribute args.f->rhs)
                                                this-f
                                                (λ ()
@@ -271,8 +303,8 @@
                    [(_ base:expr . args:name-args)
                     (with-syntax* ([base-id (generate-temporary #'base)]
                                    [(f-val (... ...))
-                                    (for/list ([this-f (in-list '(f ...))]
-                                               [this-name-f (in-list '(name-f ...))])
+                                    (for/list ([this-f (in-list ordered-fields)])
+                                      (define this-name-f (car (hash-ref f->acc this-f)))
                                       (hash-ref (attribute args.f->rhs)
                                                 this-f
                                                 (λ ()
@@ -284,7 +316,7 @@
                           (vector-immutable f-val (... ...)))))]))
                (begin-encourage-inline
                  ;; xxx push this in representation planner
-                 (define (name-f v) (unsafe-vector*-ref v f-idx))
+                 (define (all-name-f v) (unsafe-vector*-ref v all-f-idx))
                  ...)
                (define-syntax name
                  (phase1:static-interface
@@ -292,11 +324,14 @@
                   (remix:#%brackets #:set name-set)
                   (remix:#%brackets #:= name-set)
                   ;; xxx add set! if planner says so
-                  (remix:#%brackets f name-f)
+                  (remix:#%brackets all-f all-name-f)
                   ...
                   #:extensions
                   #:methods gen:layout
-                  [])))))]))]))
+                  [(define (layout-planner _)
+                     #'stx-the-planner)
+                   (define (layout-field->acc _)
+                     f->acc)])))))]))]))
 
 (provide (rename-out [phase0:layout layout])
          (for-meta 2

@@ -347,16 +347,27 @@
   {p3.x ≡ 8}
   {p3.y ≡ 7})
 
-;; XXX This is where I am
-
 ;; A layout can have a parent, which provides the guarantee that the
 ;; parent's functions will work on the child---meaning that whatever
 ;; the layout ends up being (and you can't decide that), the two will
 ;; overlap in this specific way. A layout has one or zero parents.
-#;
 (def [layout quat]
   #:parent posn
   z)
+(module+ test
+  (def [quat q1] (quat.#:alloc [x 1] [y 2] [z 3]))
+  {q1.x ≡ 1}
+  {q1.y ≡ 2}
+  {q1.z ≡ 3}
+  (def [posn qp1] q1)
+  {qp1.x ≡ 1}
+  {qp1.y ≡ 2}
+  (def [quat qpq1] qp1)
+  {qpq1.x ≡ 1}
+  {qpq1.y ≡ 2}
+  {qpq1.z ≡ 3})
+
+;; XXX This is where I am
 
 ;; A layout's fields may be specified as other layouts. When the first
 ;; field is a layout, this is not necessarily the same thing as a
