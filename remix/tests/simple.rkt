@@ -359,30 +359,42 @@
   {q1.x ≡ 1}
   {q1.y ≡ 2}
   {q1.z ≡ 3}
+  ;; We can consider to be posn (imaging calling some function that
+  ;; expects one) and it just works
   (def [posn qp1] q1)
   {qp1.x ≡ 1}
   {qp1.y ≡ 2}
+  ;; However, that casting is computation-less, so it can be cast back
+  ;; and we can get all the fields. However, if we changed it, it
+  ;; wouldn't have stayed a quat.
   (def [quat qpq1] qp1)
   {qpq1.x ≡ 1}
   {qpq1.y ≡ 2}
   {qpq1.z ≡ 3})
-
-;; XXX This is where I am
 
 ;; A layout's fields may be specified as other layouts. When the first
 ;; field is a layout, this is not necessarily the same thing as a
 ;; parent (like C structs) but it may be. (No matter what, you'd never
 ;; be able to tell, since layout doesn't make representation promises
 ;; as a rule.)
-#;
 (def [layout circle]
   [posn c] r)
+(module+ test
+  (def [circle c1] (circle.#:alloc [c p1] [r 8]))
+  {c1.c.x ≡ 5}
+  {c1.c.y ≡ 7}
+  {c1.r ≡ 8})
 
 ;; A layout's fields can _actually_ just be any def transformer, and
 ;; thus could be static interfaces
-#;
 (def [layout weird]
-  [example1^ e])
+  [example^ e])
+(module+ test
+  (def [weird w1] (weird.#:alloc [e 1]))
+  {(w1.e.f 2) ≡ 1}
+  {(w1.e.g 2) ≡ 2})
+
+;; XXX This is where I am
 
 ;; Now, the big reveal, layout has an extensible representation
 ;; planner system. At the moment, the only representations are

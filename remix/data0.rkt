@@ -1,20 +1,19 @@
 #lang racket/base
-(require (for-syntax
-          racket/base
-          syntax/quote
-          syntax/parse
-          racket/syntax
-          racket/generic
-          racket/format
-          racket/list
-          racket/match
-          (prefix-in remix: remix/stx0)
-          remix/stx/singleton-struct0
-          (for-syntax racket/base
-                      racket/syntax
-                      syntax/parse
-                      racket/generic
-                      (prefix-in remix: remix/stx0)))
+(require (for-syntax racket/base
+                     syntax/quote
+                     syntax/parse
+                     racket/syntax
+                     racket/generic
+                     racket/format
+                     racket/list
+                     racket/match
+                     (prefix-in remix: remix/stx0)
+                     remix/stx/singleton-struct0
+                     (for-syntax racket/base
+                                 racket/syntax
+                                 syntax/parse
+                                 racket/generic
+                                 (prefix-in remix: remix/stx0)))
          racket/unsafe/ops
          racket/performance-hint
          (prefix-in remix: remix/stx0))
@@ -53,7 +52,13 @@
                                              (syntax->list #'(lhs ...))))])
                          (format-id #f "~a-~a-for-def" #'int-name
                                     (if (keyword? lhs) (keyword->string lhs)
-                                        lhs)))])
+                                        lhs)))]
+                      [(full-def-rhs ...)
+                       (for/list ([def-rhs (in-list (syntax->list #'(def-rhs ...)))]
+                                  [rhs-dt (in-list (syntax->list #'(rhs-dt ...)))])
+                         (if (syntax-e rhs-dt)
+                             (list def-rhs '#:is rhs-dt)
+                             (list def-rhs)))])
          (syntax/loc stx
            (let ()
              (define int-id->orig
@@ -138,7 +143,7 @@
                           ...
                           (remix:def (remix:#%brackets remix:stx i)
                                      (phase1:static-interface
-                                      (remix:#%brackets lhs def-rhs)
+                                      (remix:#%brackets lhs . full-def-rhs)
                                       ...
                                       #:extensions
                                       ;; NB I don't pass on other
@@ -148,13 +153,13 @@
                                       ;; they might be.
                                       #:property prop:procedure
                                       (λ (_ stx)
-                                       (syntax-parse stx
-                                         [_:id
-                                          (syntax/loc stx
-                                            real-i)]
-                                         [(_ . blah:expr)
-                                          (syntax/loc stx
-                                            (real-i . blah))])))))))]))]
+                                        (syntax-parse stx
+                                          [_:id
+                                           (syntax/loc stx
+                                             real-i)]
+                                          [(_ . blah:expr)
+                                           (syntax/loc stx
+                                             (real-i . blah))])))))))]))]
               extension ...))))])))
 
 (define-syntax (define-phase0-def->phase1-macro stx)
@@ -202,7 +207,15 @@
   (define-syntax layout-mutable
     (singleton-struct
      #:methods gen:layout-planner
-     [(define (layout-planner-mutable? lp) #t)])))
+     [(define (layout-planner-mutable? lp) #t)]))
+
+  (define-syntax-class field
+    #:attributes (name dt)
+    #:literals (remix:#%brackets)
+    (pattern name:id
+             #:attr dt #f)
+    (pattern (remix:#%brackets dt name:id)
+             #:declare dt (static remix:def-transformer? "def transformer"))))
 
 (define-syntax phase0:layout
   (singleton-struct
@@ -217,7 +230,7 @@
            (~optional (~and (~seq #:parent (~var parent (static layout? "layout")))
                             (~bind [parent-va (attribute parent.value)]))
                       #:defaults ([parent-va #f]))
-           f:id ...)
+           F:field ...)
          (define parent-v (attribute parent-va))
          (define the-planner
            (or (and parent-v (layout-planner parent-v))
@@ -229,7 +242,8 @@
                (hasheq)))
          (define f->acc
            (for/fold ([base parent-f->acc])
-                     ([the-f (in-list (syntax->datum #'(f ...)))]
+                     ([the-f (in-list (syntax->datum #'(F.name ...)))]
+                      [the-dt (in-list (attribute F.dt))]
                       [the-idx (in-naturals (hash-count parent-f->acc))])
              (when (hash-has-key? base the-f)
                (raise-syntax-error 'layout
@@ -238,13 +252,17 @@
                                    stx
                                    the-f))
              (define the-name-f (format-id #f "~a-~a" #'name the-f))
-             (hash-set base the-f (cons the-name-f the-idx))))
+             (hash-set base the-f (vector the-name-f the-dt the-idx))))
          (with-syntax* ([name-alloc (format-id #f "~a-alloc" #'name)]
                         [name-set (format-id #f "~a-set" #'name)]
-                        [((all-f all-name-f all-f-idx) ...)
+                        [((all-f all-name-f all-f-si-rhs all-f-idx) ...)
                          (for/list ([(the-f v) (in-hash f->acc)])
-                           (match-define (cons the-name-f the-f-idx) v)
-                           (list the-f the-name-f the-f-idx))]
+                           (match-define (vector the-name-f the-dt the-f-idx) v)
+                           (list the-f the-name-f
+                                 (if the-dt
+                                     (list the-name-f '#:is the-dt)
+                                     (list the-name-f))
+                                 the-f-idx))]
                         [stx-the-planner the-planner]
                         [stx-f->acc f->acc])
            (syntax/loc stx
@@ -259,7 +277,7 @@
                    (sort (hash-keys f->acc)
                          <=
                          #:key (λ (x)
-                                 (cdr (hash-ref f->acc x)))))
+                                 (vector-ref (hash-ref f->acc x) 2))))
                  (define-syntax-class name-arg
                    #:attributes (lhs rhs)
                    #:literals (remix:#%brackets)
@@ -304,7 +322,10 @@
                     (with-syntax* ([base-id (generate-temporary #'base)]
                                    [(f-val (... ...))
                                     (for/list ([this-f (in-list ordered-fields)])
-                                      (define this-name-f (car (hash-ref f->acc this-f)))
+                                      (define this-name-f
+                                        (vector-ref
+                                         (hash-ref f->acc this-f)
+                                         0))
                                       (hash-ref (attribute args.f->rhs)
                                                 this-f
                                                 (λ ()
@@ -321,10 +342,11 @@
                (define-syntax name
                  (phase1:static-interface
                   (remix:#%brackets #:alloc name-alloc)
+                  ;; xxx perhaps allow planner to not have this
                   (remix:#%brackets #:set name-set)
                   (remix:#%brackets #:= name-set)
                   ;; xxx add set! if planner says so
-                  (remix:#%brackets all-f all-name-f)
+                  (remix:#%brackets all-f . all-f-si-rhs)
                   ...
                   #:extensions
                   #:methods gen:layout
@@ -345,4 +367,3 @@
 
 ;; xxx (dynamic-)interface
 ;; xxx data
-
