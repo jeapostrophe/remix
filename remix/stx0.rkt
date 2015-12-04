@@ -23,14 +23,14 @@
      ;; composable.
      (def-transform (attribute dt.value) stx)]
     ;; xxx test this
-    [(_ dt . body:expr)
+    [(_ dt . body)
      #:declare dt (static def-transformer? "def transformer")
      (syntax/loc stx
        (def (#%brackets dt) . body))]
-    [(_ x:id . body:expr)
+    [(_ x:id . body)
      (syntax/loc stx
        (define x (remix-block . body)))]
-    [(_ ((~and (~not #%brackets) x) . args:expr) . body:expr)
+    [(_ ((~and (~not #%brackets) x) . args) . body)
      (syntax/loc stx
        (def x (remix-λ args . body)))]))
 
@@ -53,28 +53,28 @@
        #:declare dt (static def*-transformer? "def* transformer")
        (def*-transform (attribute dt.value) stx)]
       ;; xxx test this
-      [(_ (dt . def-body:expr) bind-body:expr)
+      [(_ (dt . def-body) bind-body)
        #:declare dt (static def*-transformer? "def* transformer")
        (syntax/loc stx
          (def*-internal ((#%brackets dt) . def-body) bind-body))]
-      [(_ ((~and (~not #%brackets) x:id) . def-body:expr) bind-body:expr)
+      [(_ ((~and (~not #%brackets) x:id) . def-body) bind-body)
        (syntax/loc stx
          (let ([x (remix-block . def-body)])
            (remix-block . bind-body)))]
-      [(_ (((~and (~not #%brackets) x) . args:expr) . def-body:expr) bind-body:expr)
+      [(_ (((~and (~not #%brackets) x) . args) . def-body) bind-body)
        (syntax/loc stx
          (def*-internal (x (remix-λ args . def-body)) bind-body))]))
 
   (define-syntax (remix-block stx)
     (syntax-parse stx
       #:literals (def*)
-      [(_ (~and (~not (def* . _)) before:expr) ...
-          (def* . def*-body:expr) . after:expr)
+      [(_ (~and (~not (def* . _)) before) ...
+          (def* . def*-body) . after)
        (syntax/loc stx
          (let ()
            before ...
            (def*-internal def*-body after)))]
-      [(_ . body:expr)
+      [(_ . body)
        (syntax/loc stx
          (let () . body))]))
 
@@ -118,11 +118,11 @@
       [(cons token input)
        (syntax-parse token
          #:literals (unquote)
-         [(~or (unquote (~and op1:expr (~not _:operator-sym))) op1:operator-sym)
+         [(~or (unquote (~and op1 (~not _:operator-sym))) op1:operator-sym)
           (define-values (output-p operators-p)
             (shunting-yard:push-operator output operators #'op1))
           (shunting-yard:consume-input input output-p operators-p)]
-         [(~or (unquote arg:operator-sym) arg:expr)
+         [(~or (unquote arg:operator-sym) arg)
           (shunting-yard:consume-input input (cons #'arg output) operators)])]))
   (define (shunting-yard:push-operator output operators op1)
     (match operators
@@ -150,14 +150,14 @@
         operators)]))
   (define (shunting-yard:push-operator-to-output op output)
     (syntax-parse output
-      [(arg2:expr arg1:expr output:expr ...)
+      [(arg2 arg1 output ...)
        (cons (quasisyntax/loc op
                (#,op arg1 arg2))
              (syntax->list
               #'(output ...)))])))
 (define-syntax (#%braces stx)
   (syntax-parse stx
-    [(_ input-tokens:expr ...)
+    [(_ input-tokens ...)
      (shunting-yard:consume-input
       (syntax->list #'(input-tokens ...))
       empty
@@ -169,11 +169,13 @@
 (define-syntax (#%dot stx)
   (syntax-parse stx
     #:literals (#%dot)
-    [(_ dt x:expr ... (#%dot y:expr ...))
+    [(_ dt . (~and x+y (x ... (#%dot . y))))
      #:declare dt (static dot-transformer? "dot transformer")
-     (syntax/loc stx
-       (#%dot dt x ... y ...))]
-    [(_ dt . _)
+     (quasisyntax/loc stx
+       (#%dot dt
+              #,@(syntax/loc #'x+y
+                   (x ... . y))))]
+    [(_ dt . (~not (x ... (#%dot . _) . _)))
      #:declare dt (static dot-transformer? "dot transformer")
      (dot-transform (attribute dt.value) stx)]))
 
@@ -183,13 +185,13 @@
 (define-syntax (remix-#%app stx)
   (syntax-parse stx
     #:literals (#%dot)
-    [(_ (~and dot-rator (#%dot x:expr ... (#%dot y:expr ...))) . body:expr)
+    [(_ (#%dot x ... (#%dot y ...)) . body)
      (syntax/loc stx
        (remix-#%app (#%dot x ... y ...) . body))]
-    [(_ (~and dot-rator (#%dot adt . _)) . body:expr)
+    [(_ (#%dot adt . (~not (x ... (#%dot . _) . _))) . body)
      #:declare adt (static app-dot-transformer? "app-dot transformer")
      (app-dot-transform (attribute adt.value) stx)]
-    [(_ . body:expr)
+    [(_ . body)
      (syntax/loc stx
        (#%app . body))]))
 
@@ -264,16 +266,16 @@
   #:property prop:procedure
   (λ (_ stx)
     (syntax-parse stx
-      [(_ args:remix-λ-args . body:expr)
+      [(_ args:remix-λ-args . body)
        (syntax/loc stx
          (λ args.λ-args (remix-block args.λ-binds ... (remix-block . body))))]))
   #:methods gen:dot-transformer
   [(define (dot-transform _ stx)
      (syntax-parse stx
-       [(_#%dot _λ body:expr)
+       [(_#%dot _λ body)
         (syntax/loc stx
           (remix-cut body))]
-       [(_#%dot _λ bodies:expr ...)
+       [(_#%dot _λ bodies ...)
         (syntax/loc stx
           (remix-cut (#%dot bodies ...)))]))])
 
@@ -282,7 +284,7 @@
     (raise-syntax-error '$ "illegal outside cut" stx)))
 (define-syntax (remix-cut stx)
   (syntax-parse stx
-    [(_ body:expr)
+    [(_ body)
      (syntax/loc stx
        (remix-λ (x)
                 (syntax-parameterize ([remix-cut-$ (make-rename-transformer #'x)])
@@ -310,13 +312,13 @@
                     #:else (impossible! 'cond
                                         "non-existent default case reached"
                                         #,stx))))]
-    [(_ (~and before:expr (~not (#%brackets . any:expr))) ...
-        (#%brackets #:else . answer-body:expr))
+    [(_ (~and before (~not (#%brackets . _))) ...
+        (#%brackets #:else . answer-body))
      (syntax/loc stx
        (remix-block before ... . answer-body))]
-    [(_ (~and before:expr (~not (#%brackets . any:expr))) ...
-        (#%brackets question:expr . answer-body:expr)
-        . more:expr)
+    [(_ (~and before (~not (#%brackets . _))) ...
+        (#%brackets question . answer-body)
+        . more)
      (quasisyntax/loc stx
        (remix-block before ...
                     (if question
@@ -370,7 +372,7 @@
    [(define (def-transform _ stx)
       (syntax-parse stx
         #:literals (#%brackets)
-        [(_def (#%brackets _stx x:id) . body:expr)
+        [(_def (#%brackets _stx x:id) . body)
          (syntax/loc stx
            (define x (remix-block . body)))]))]))
 
@@ -383,7 +385,7 @@
    [(define (def-transform _ stx)
       (syntax-parse stx
         #:literals (#%brackets)
-        [(_def (#%brackets _stx x:id) . body:expr)
+        [(_def (#%brackets _stx x:id) . body)
          (syntax/loc stx
            (define-syntax x (remix-block . body)))]))]))
 
@@ -396,7 +398,7 @@
    [(define (def-transform _ stx)
       (syntax-parse stx
         #:literals (#%brackets)
-        [(_def (#%brackets _mac (x:id . pat:expr)) . body:expr)
+        [(_def (#%brackets _mac (x:id . pat)) . body)
          (syntax/loc stx
            (define-simple-macro (x . pat) . body))]))]))
 

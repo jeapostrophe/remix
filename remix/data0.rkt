@@ -106,18 +106,19 @@
                  (syntax-parse stx
                    [(_dot me:id x:interface-member)
                     (get-rhs-id stx #'x)]
-                   [(_dot me:id x:interface-member . more:expr)
+                   [(_dot me:id . (~and x+more (x:interface-member . more)))
                     (quasisyntax/loc stx
                       (remix:block
                        #,(get-rhs-def stx #'x)
-                       (remix:#%dot x . more)))]))]
+                       #,(syntax/loc #'x+more
+                           (remix:#%dot x . more))))]))]
               #:methods remix:gen:app-dot-transformer
               [(define (app-dot-transform _ stx)
                  (syntax-parse stx
-                   [(_app (_dot me:id x:interface-member) . body:expr)
+                   [(_app (_dot me:id x:interface-member) . body)
                     (quasisyntax/loc stx
                       (#,(get-rhs-id stx #'x) . body))]
-                   [(_app (_dot me:id x:interface-member . more:expr) . body:expr)
+                   [(_app (_dot me:id x:interface-member . more) . body)
                     (quasisyntax/loc stx
                       (remix:block
                        #,(get-rhs-def stx #'x)
@@ -126,7 +127,7 @@
               [(define (def-transform _ stx)
                  (syntax-parse stx
                    #:literals (remix:#%brackets)
-                   [(def (remix:#%brackets me:id i:id) . body:expr)
+                   [(def (remix:#%brackets me:id i:id) . body)
                     (with-syntax ([real-i (generate-temporary #'i)])
                       (syntax/loc stx
                         (begin
@@ -137,7 +138,7 @@
                                          [_:id
                                           (syntax/loc stx
                                             (rhs real-i))]
-                                         [(_ . blah:expr)
+                                         [(_ . blah)
                                           (syntax/loc stx
                                             (rhs real-i . blah))])))
                           ...
@@ -157,7 +158,7 @@
                                           [_:id
                                            (syntax/loc stx
                                              real-i)]
-                                          [(_ . blah:expr)
+                                          [(_ . blah)
                                            (syntax/loc stx
                                              (real-i . blah))])))))))]))]
               extension ...))))])))
@@ -177,7 +178,7 @@
             [(define (def-transform _ stx)
                (syntax-parse stx
                  #:literals (remix:#%brackets)
-                 [(def (remix:#%brackets me:id i:id) . body:expr)
+                 [(def (remix:#%brackets me:id i:id) . body)
                   (syntax/loc stx
                     (remix:def (remix:#%brackets remix:stx i)
                                (phase1:base . body)))]))]))))]))
@@ -204,8 +205,12 @@
     #:literals (remix:#%brackets)
     (pattern name:id
              #:attr dt #f)
-    (pattern (remix:#%brackets dt name:id)
-             #:declare dt (static remix:def-transformer? "def transformer"))))
+    (pattern (remix:#%brackets dt:id name:id)
+             ;; XXX This can't be here because it disallows mutual
+             ;; recursion... move the check somewhere else?
+             
+             ;; #:declare dt (static remix:def-transformer? "def transformer")
+             )))
 
 (define-syntax layout-immutable
   (singleton-struct
@@ -384,6 +389,7 @@
                             (rep-mutate base-id f-idx f-val-id)
                             (... ...)
                             (void)))))]))
+               ;; xxx add per-field mutators with a set! macro
                (begin-encourage-inline
                  (define (all-name-f v) (rep-accessor v all-f-idx))
                  ...)

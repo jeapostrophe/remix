@@ -437,3 +437,24 @@
   (w1.#:! [c1 w1.c2] [c2 w1.c1])
   {w1.c1.r ≡ 8}
   {w1.c2.r ≡ 3})
+
+;; These support mutual recursion
+(def [layout even]
+  #:rep layout-mutable
+  e [odd o])
+(def [layout odd]
+  #:rep layout-mutable
+  [even e] o)
+(module+ test
+  (def [even even1]
+    (even.#:alloc
+     [e 0]
+     [o (odd.#:alloc
+         [e #f]
+         [o 1])]))
+  (even1.o.#:set! [e even1])
+  {even1.e ≡ 0}
+  {even1.o.o ≡ 1}
+  {even1.o.e.e ≡ 0}
+  {even1.o.e.o.o ≡ 1}
+  {even1.o.e.o.e.e ≡ 0})
