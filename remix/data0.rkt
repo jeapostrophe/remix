@@ -191,23 +191,13 @@
                      static-interface-members))
 
 (begin-for-syntax
-  ;; XXX fill this in for parents, etc
   (define-generics layout
-    (layout-planner layout)
+    (layout-planner-id layout)
     ;; xxx the accessors seem to not be around anyways, so instead,
     ;; this should just be a mapping produced by the planner.
     (layout-field->acc layout))
-  (begin-for-syntax
-    (define-generics layout-planner
-      (layout-planner-mutable? layout-planner)))
-  (define-syntax layout-immutable
-    (singleton-struct
-     #:methods gen:layout-planner
-     [(define (layout-planner-mutable? lp) #f)]))
-  (define-syntax layout-mutable
-    (singleton-struct
-     #:methods gen:layout-planner
-     [(define (layout-planner-mutable? lp) #t)]))
+  (define-generics layout-planner
+    (layout-planner-mutable? layout-planner))
 
   (define-syntax-class field
     #:attributes (name dt)
@@ -216,6 +206,16 @@
              #:attr dt #f)
     (pattern (remix:#%brackets dt name:id)
              #:declare dt (static remix:def-transformer? "def transformer"))))
+
+(define-syntax layout-immutable
+  (singleton-struct
+   #:methods gen:layout-planner
+   [(define (layout-planner-mutable? lp) #f)]))
+
+(define-syntax layout-mutable
+  (singleton-struct
+   #:methods gen:layout-planner
+   [(define (layout-planner-mutable? lp) #t)]))
 
 (define-syntax phase0:layout
   (singleton-struct
@@ -230,13 +230,28 @@
            (~optional (~and (~seq #:parent (~var parent (static layout? "layout")))
                             (~bind [parent-va (attribute parent.value)]))
                       #:defaults ([parent-va #f]))
+           (~optional (~and (~seq #:rep (~var rep (static layout-planner?
+                                                          "layout planner"))))
+                      #:defaults ([rep #f]))
            F:field ...)
          (define parent-v (attribute parent-va))
-         (define the-planner
-           (or (and parent-v (layout-planner parent-v))
-               ;; xxx allow the default planner to be customized and
-               ;; ensure it is equal to the parent's
+         (define this-rep-id (attribute rep))
+         (define parent-rep-id (and parent-v (layout-planner-id parent-v)))
+         (unless (or (not this-rep-id)
+                     (not parent-rep-id)
+                     (bound-identifier=? this-rep-id parent-rep-id))
+           (raise-syntax-error
+            'layout
+            (format "Parent (~v) and child (~v) representation planner must match"
+                    parent-rep-id
+                    this-rep-id)
+            stx))
+         (define the-planner-id
+           (or parent-rep-id
+               this-rep-id
                #'layout-immutable))
+         (define the-planner
+           (syntax-local-value the-planner-id))
          (define parent-f->acc
            (or (and parent-v (layout-field->acc parent-v))
                (hasheq)))
@@ -255,6 +270,7 @@
              (hash-set base the-f (vector the-name-f the-dt the-idx))))
          (with-syntax* ([name-alloc (format-id #f "~a-alloc" #'name)]
                         [name-set (format-id #f "~a-set" #'name)]
+                        [name-set! (format-id #f "~a-set!" #'name)]
                         [((all-f all-name-f all-f-si-rhs all-f-idx) ...)
                          (for/list ([(the-f v) (in-hash f->acc)])
                            (match-define (vector the-name-f the-dt the-f-idx) v)
@@ -263,8 +279,22 @@
                                      (list the-name-f '#:is the-dt)
                                      (list the-name-f))
                                  the-f-idx))]
-                        [stx-the-planner the-planner]
-                        [stx-f->acc f->acc])
+                        [stx-the-planner-id the-planner-id]
+                        [stx-f->acc f->acc]
+                        [(rep-constructor
+                          rep-accessor rep-mutate
+                          (mutation-interface ...))
+                         ;; XXX This should work differently
+                         (if (layout-planner-mutable? the-planner)
+                             (list #'vector
+                                   #'unsafe-vector*-ref
+                                   #'unsafe-vector*-set!
+                                   #'((remix:#%brackets #:set! name-set!)
+                                      (remix:#%brackets #:! name-set!)))
+                             (list #'vector-immutable
+                                   #'unsafe-vector*-ref
+                                   #'void
+                                   #'()))])
            (syntax/loc stx
              (begin
                (begin-for-syntax
@@ -314,8 +344,7 @@
                                                           this-f)
                                                   stx))))])
                       (syntax/loc stx
-                        ;; xxx push this in representation planner
-                        (vector-immutable f-val (... ...))))]))
+                        (rep-constructor f-val (... ...))))]))
                (define-syntax (name-set stx)
                  (syntax-parse stx
                    [(_ base:expr . args:name-args)
@@ -333,37 +362,54 @@
                                                     (#,this-name-f base-id)))))])
                       (syntax/loc stx
                         (let ([base-id base])
-                          ;; xxx push this in representation planner
-                          (vector-immutable f-val (... ...)))))]))
+                          (rep-constructor f-val (... ...)))))]))
+               (define-syntax (name-set! stx)
+                 (syntax-parse stx
+                   [(_ base:expr . args:name-args)
+                    (with-syntax* ([base-id (generate-temporary #'base)]
+                                   [((f-val-id f-val f-idx) (... ...))
+                                    (for/list ([(this-f this-f-val)
+                                                (in-hash (attribute args.f->rhs))])
+                                      (match-define
+                                        (vector this-name-f _ this-idx)
+                                        (hash-ref f->acc this-f))
+                                      (list
+                                       (generate-temporary this-f)
+                                       this-f-val
+                                       this-idx))])
+                      (syntax/loc stx
+                        (let ([f-val-id f-val]
+                              (... ...))
+                          (let ([base-id base])
+                            (rep-mutate base-id f-idx f-val-id)
+                            (... ...)
+                            (void)))))]))
                (begin-encourage-inline
-                 ;; xxx push this in representation planner
-                 (define (all-name-f v) (unsafe-vector*-ref v all-f-idx))
+                 (define (all-name-f v) (rep-accessor v all-f-idx))
                  ...)
                (define-syntax name
                  (phase1:static-interface
                   (remix:#%brackets #:alloc name-alloc)
-                  ;; xxx perhaps allow planner to not have this
                   (remix:#%brackets #:set name-set)
                   (remix:#%brackets #:= name-set)
-                  ;; xxx add set! if planner says so
+                  mutation-interface ...
                   (remix:#%brackets all-f . all-f-si-rhs)
                   ...
                   #:extensions
                   #:methods gen:layout
-                  [(define (layout-planner _)
-                     #'stx-the-planner)
+                  [(define (layout-planner-id _)
+                     #'stx-the-planner-id)
                    (define (layout-field->acc _)
                      f->acc)])))))]))]))
 
 (provide (rename-out [phase0:layout layout])
-         (for-meta 2
-                   gen:layout-planner
-                   layout-planner?
-                   layout-planner-mutable?)
          (for-syntax gen:layout
                      layout?
-                     layout-immutable
-                     layout-mutable))
+                     gen:layout-planner
+                     layout-planner?
+                     layout-planner-mutable?)
+         layout-immutable
+         layout-mutable)
 
 ;; xxx (dynamic-)interface
 ;; xxx data

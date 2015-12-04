@@ -390,11 +390,9 @@
 (def [layout weird]
   [example^ e])
 (module+ test
-  (def [weird w1] (weird.#:alloc [e 1]))
-  {(w1.e.f 2) ≡ 1}
-  {(w1.e.g 2) ≡ 2})
-
-;; XXX This is where I am
+  (def [weird wr1] (weird.#:alloc [e 1]))
+  {(wr1.e.f 2) ≡ 1}
+  {(wr1.e.g 2) ≡ 2})
 
 ;; Now, the big reveal, layout has an extensible representation
 ;; planner system. At the moment, the only representations are
@@ -424,7 +422,18 @@
 ;; pointers to the end.
 ;;
 ;; Anyways, here's a mutable example.
-#;
 (def [layout world]
   #:rep layout-mutable
   [circle c1] [circle c2])
+(module+ test
+  (def [world w1] (world.#:alloc [c1 c1] [c2 (c1.#:set [r 3])]))
+  {w1.c1.r ≡ 8}
+  {w1.c2.r ≡ 3}
+  ;; The set! is simultaneous
+  (w1.#:set! [c1 w1.c2] [c2 w1.c1])
+  {w1.c1.r ≡ 3}
+  {w1.c2.r ≡ 8}
+  ;; It is aliased to !
+  (w1.#:! [c1 w1.c2] [c2 w1.c1])
+  {w1.c1.r ≡ 8}
+  {w1.c2.r ≡ 3})
