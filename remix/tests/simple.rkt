@@ -2,8 +2,9 @@
 ;; #lang remix only contains two bindings: #%module-begin and require
 ;;
 ;; We use require to get everything else. most of it comes from stx0
-(require remix/stx0
-         remix/num/gen0)
+require remix/stx0
+        remix/num/gen0;
+
 (module+ test
   ;; This introduces ≡ as a testing form
 
@@ -155,6 +156,7 @@
   {v11 ≡ 11})
 
 (def v11b
+  ;; ((#%dot λ (+ 10 1)) 'ignored)
   (λ.(+ 10 1) 'ignored))
 (module+ test
   {v11b ≡ 11})
@@ -198,10 +200,12 @@
 ;; otherwise.
 (def (f-no-args) 42)
 (def (f-one-arg x) x)
+;; => (def f-one-arg (λ (x1) (def x x1) x))
 (def (f-kw-arg #:x x) x)
 (def (f-kw-args #:x x y) (+ x y))
 (def (f-def-arg (x 20) (y 22)) (+ x y))
 (def (f-two-arg x y) (+ x y))
+;; (f-rest-args . x) => ((#%dot f-rest-args x))
 (def (f-rest-args #%rest x) 42)
 (module+ test
   {(f-no-args) ≡ 42}
@@ -234,7 +238,9 @@
 (module+ test
   {(flip - 5 0) ≡ (- 0 5)})
 
+;; ... => (#%dot #%dot #%dot)
 ;; … (\ldots) is ... (because that doesn't work with cdots)
+;; or dotdotdot or ooo or ***
 (def [mac (flipper f x … y)]
   (f y x …))
 (module+ test
@@ -273,8 +279,11 @@
 ;; implicitly pass the binding on as the first argument to functions
 ;; when used.
 (def [example^ ee] 1)
+;; => (begin (define real-ee 1) (define-syntax ee ...magic...))
 (module+ test
   {(ee.f 2) ≡ 1}
+  ;; => {(example^.f real-ee 2) ≡ 2}
+  ;; => {(example^.f 1 2) ≡ 1}
   {(ee.g 2) ≡ 2})
 
 ;; This is especially useful inside of functions
@@ -321,6 +330,8 @@
 ;; layout is a def-transformer (XXX I wish I could make it phase1
 ;; macro also but it needs to define some functions that could be
 ;; called)
+;;
+;; XXX maybe I can expand to a submodule and local-require
 
 ;; The most basic syntax is a list of fields, which are identifiers.
 (def [layout posn]
@@ -328,6 +339,7 @@
 (module+ test
   ;; You will get an allocation function named #:alloc
   (def [posn p1] (posn.#:alloc [x 5] [y 7]))
+  ;; XXX (def [posn p1] #:alloc [x 5] [y 7])
   ;; And accessors
   {p1.x ≡ 5}
   {p1.y ≡ 7}
@@ -372,6 +384,8 @@
   {qpq1.y ≡ 2}
   {qpq1.z ≡ 3})
 
+;; XXX Does it do the "right thing" for copying?
+
 ;; A layout's fields may be specified as other layouts. When the first
 ;; field is a layout, this is not necessarily the same thing as a
 ;; parent (like C structs) but it may be. (No matter what, you'd never
@@ -402,9 +416,10 @@
 ;;
 ;; I expect to produce a few more
 ;;
-;; (XXX) layout-c        : Compatible with C
-;; (XXX) layout-optimize : Optimize for removing padding and have
-;;                         cache-line-aligned accesses
+;; (XXX) layout-c         : Compatible with C
+;; (XXX) layout-optimize  : Optimize for removing padding and have
+;;                          cache-line-aligned accesses
+;; (XXX) layout-enumerate : Use data/enumerate
 ;;
 ;; It would be possible to make layout-c right now, but define-cstruct
 ;; is really slow. It is trivial to have layout-optimize if you have

@@ -1,3 +1,10 @@
+TODO add ; as #%semicolon that adds ()s between occurrences
+
+TODO add syntax property for def transformer on RHS (for function call
+results, alloc, etc)
+
+TODO maybe add , as special
+
 TODO #%dot is extensible transformer
 
 (struct posn ((complex x) y))
@@ -38,6 +45,8 @@ TODO robby's request
  (f (cons x l)) = {1+ (f l)})
 
 TODO (define+ (f case) body)
+
+TODO facts/properties macro
 
 TODO No set! (use data-structure mutation and :=)
 
@@ -146,6 +155,22 @@ transformer (can change define to define-syntax/etc) vs expander
 (expands to a different syntax) --- no ability to add args to
 functions!
 --- See https://mail.google.com/mail/u/0/#inbox/1513f480b3313fb2
+
+;; def+'s default is to use match (while def/def*'s default is to not
+;; use match)
+
+(def+ (length '())
+  0)
+(def+ (length (cons x xs))
+  {(length xs) + 1})
+(def+ [contract length] (-> list? nat?))
+(def+ [doc (length l)]
+  @{A most excellent function
+    for discovering the length of lists.})
+(def+ [examples length]
+ {(length '()) \defs 0}
+ {(length '(a b c)) \defs 3})
+(def+ [provide length])
 
 TODO how to make sure cases of cond/etc are complete?
 
