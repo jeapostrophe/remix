@@ -36,7 +36,8 @@
        (def x (remix-λ args . body)))]))
 
 (module remix-block racket/base
-  (require (for-syntax racket/base
+  (require remix/semi
+           (for-syntax racket/base
                        racket/generic
                        syntax/parse))
   (define-syntax (def* stx)
@@ -66,7 +67,7 @@
        (syntax/loc stx
          (def*-internal (x (remix-λ args . def-body)) bind-body))]))
 
-  (define-syntax (remix-block stx)
+  (define-syntax (the-remix-block stx)
     (syntax-parse stx
       #:literals (def*)
       [(_ (~and (~not (def* . _)) before) ...
@@ -78,6 +79,12 @@
       [(_ . body)
        (syntax/loc stx
          (let () . body))]))
+
+  (define-syntax (remix-block stx)
+    (syntax-parse stx
+      [(_ s:semi-seq)
+       (syntax/loc stx
+         (the-remix-block s.semi-form ... s.tail-form ...))]))
 
   (define-syntax #%brackets
     (make-rename-transformer #'remix-block))
@@ -156,13 +163,25 @@
                (#,op arg1 arg2))
              (syntax->list
               #'(output ...)))])))
-(define-syntax (#%braces stx)
+
+(define-syntax (the-#%braces stx)
   (syntax-parse stx
     [(_ input-tokens ...)
      (shunting-yard:consume-input
       (syntax->list #'(input-tokens ...))
       empty
       empty)]))
+
+(define-syntax (#%braces stx)
+  (syntax-parse stx
+    [(_ s:semi-seq)
+     (syntax-case #'(s.semi-form ...) ()
+       [()
+        (syntax/loc stx
+          (the-#%braces s.tail-form ...))]
+       [(sf ...)
+        (syntax/loc stx
+          (remix-block sf ... (the-#%braces s.tail-form ...)))])]))
 
 (begin-for-syntax
   (define-generics dot-transformer

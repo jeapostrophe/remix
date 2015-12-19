@@ -5,6 +5,7 @@
 require remix/stx0
         remix/num/gen0;
 
+;
 (module+ test
   ;; This introduces ≡ as a testing form
 
@@ -14,17 +15,44 @@ require remix/stx0
   (require remix/test0))
 
 ;; define is replaced with def
-(def z 42)
-(module+ test
-  {z ≡ 42})
+def z 42;
+module+ test
+ {z ≡ 42};
 
 ;; when def has more forms than one, they are put inside of a block
-(def x
-  (def a 40)
-  (def b 2)
-  (+ a b))
+def x
+ (def a 40)
+ (def b 2)
+ (+ a b) ;
+;
 (module+ test
   {x ≡ 42})
+
+;; If you would like to use ;-syntax in the inside of def, then you
+;; need more punctuation. You have two choices.
+def x2
+ [def a 40;
+  def b 2;
+  (+ a b)];
+;
+(module+ test
+  {x2 ≡ 42})
+
+def x3
+ {def a 40;
+  def b 2;
+  a + b};
+;
+(module+ test
+  {x3 ≡ 42})
+
+def x4
+ {a := 40,;
+  b := 2,;
+  a + b};
+;
+(module+ test
+  {x4 ≡ 42})
 
 ;; but of course def supports function definitions. [] is NOT the same
 ;; as (), it parses as #%brackets and defaults to expanding to a block
