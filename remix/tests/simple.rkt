@@ -1,9 +1,15 @@
 #lang remix
+;; Remix comments start with ;;
+
 ;; #lang remix only contains two bindings: #%module-begin and require
 ;;
 ;; We use require to get everything else. most of it comes from stx0
 require remix/stx0
         remix/num/gen0;
+;; A semi introduces a set of parens to its left
+
+;; If there is nothing to its left, then it ;-quotes what is to its
+;; right and makes it not introduce a set of parens
 
 ;
 (module+ test
@@ -46,6 +52,8 @@ def x3
 (module+ test
   {x3 ≡ 42})
 
+;; If the kind of delimiters you want ; to introduce are {}s, then use
+;; ,;
 def x4
  {a := 40,;
   b := 2,;
