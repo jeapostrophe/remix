@@ -5,6 +5,7 @@
                      racket/generic
                      racket/syntax
                      syntax/parse)
+         remix/semi
          syntax/quote
          syntax/parse/define
          remix/stx/singleton-struct0
