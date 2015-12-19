@@ -276,7 +276,7 @@ def x4
 
 ;; ... => (#%dot #%dot #%dot)
 ;; … (\ldots) is ... (because that doesn't work with cdots)
-;; or dotdotdot or ooo or ***
+;; or dotdotdot or ooo or *** (XXX)
 (def [mac (flipper f x … y)]
   (f y x …))
 (module+ test
