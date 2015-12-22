@@ -268,11 +268,17 @@ def x4
 
 ;; ... => (#%dot #%dot #%dot)
 ;; … (\ldots) is ... (because that doesn't work with cdots)
-;; or dotdotdot or ooo or *** (XXX)
-(def [mac (flipper f x … y)]
+;; or dotdotdot or ***
+(def [mac (flipper1 f x … y)]
   (f y x …))
+(def [mac (flipper2 f x dotdotdot y)]
+  (f y x dotdotdot))
+(def [mac (flipper3 f x *** y)]
+  (f y x ***))
 (module+ test
-  {(flipper - 5 9 0) ≡ (- 0 5 9)})
+  {(flipper1 - 5 9 0) ≡ (- 0 5 9)}
+  {(flipper2 - 5 9 0) ≡ (- 0 5 9)}
+  {(flipper3 - 5 9 0) ≡ (- 0 5 9)})
 
 ;; data gives us interfaces, compound data, and data types and that
 ;; sort of thing

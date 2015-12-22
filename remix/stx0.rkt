@@ -373,7 +373,9 @@
          (rename-out [remix-#%app #%app])
          (for-syntax gen:app-dot-transformer
                      app-dot-transformer?)
-         (rename-out [... …]) ;; \ldots
+         (rename-out [... …] ;; \ldots
+                     [... dotdotdot]
+                     [... ***]) 
          #%datum
          quote
          module
