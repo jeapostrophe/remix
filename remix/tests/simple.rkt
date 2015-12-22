@@ -8,17 +8,15 @@ require remix/stx0
         remix/num/gen0;
 ;; A semi introduces a set of parens to its left
 
-;; If there is nothing to its left, then it ;-quotes what is to its
-;; right and makes it not introduce a set of parens
+;; As usual `unquote` escapes from its context, in the case of a
+;; semi-sequence, this means that the term is not wrapped.
+,(module+ test
+   ;; This introduces ≡ as a testing form
 
-;
-(module+ test
-  ;; This introduces ≡ as a testing form
-
-  ;; XXX Drop this and instead have a macro for writing down
-  ;; properties that communicates with boolean forms, etc. Supports ∀,
-  ;; etc.
-  (require remix/test0))
+   ;; XXX Drop this and instead have a macro for writing down
+   ;; properties that communicates with boolean forms, etc. Supports ∀,
+   ;; etc.
+   (require remix/test0))
 
 ;; define is replaced with def
 def z 42;
@@ -30,9 +28,8 @@ def x
  (def a 40)
  (def b 2)
  (+ a b) ;
-;
-(module+ test
-  {x ≡ 42})
+,(module+ test
+   {x ≡ 42})
 
 ;; If you would like to use ;-syntax in the inside of def, then you
 ;; need more punctuation. You have two choices.
@@ -40,25 +37,20 @@ def x2
  [def a 40;
   def b 2;
   (+ a b)];
-;
-(module+ test
-  {x2 ≡ 42})
+,(module+ test
+   {x2 ≡ 42})
 
 def x3
- {def a 40;
+ [def a 40;
   def b 2;
-  a + b};
-;
-(module+ test
-  {x3 ≡ 42})
+  {a + b}];
+,(module+ test
+   {x3 ≡ 42})
 
-;; If the kind of delimiters you want ; to introduce are {}s, then use
-;; ,;
 def x4
- {a := 40,;
-  b := 2,;
-  a + b};
-;
+ [,{a := 40}
+  def b 2 ;
+  {a + b}];
 (module+ test
   {x4 ≡ 42})
 

@@ -1,21 +1,5 @@
-TODO add ; as #%semicolon that adds ()s between occurrences
-
 TODO add syntax property for def transformer on RHS (for function call
 results, alloc, etc)
-
-TODO maybe add , as special
-
-TODO #%dot is extensible transformer
-
-(struct posn ((complex x) y))
-
-(define (f (posn p))
- p.x.real-part)
-
-p.x.real-part
-(#%dot (#%dot p x) real-part)
-(let ([(complex tmp) (posn-x p)])
- (#%dot tmp real-part))
 
 (define (from-origin x) : posn
   (posn x x))
@@ -24,19 +8,9 @@ p.x.real-part
 
 (begin a (from-origin 5)).x
 
+TODO #%dot app syntax differently
+
 obj.(move 5 6)
-
-(define (f (cons x y))
- stuff)
-(define (f (a-cons p))
- stuff)
-
-(define (f [: b box])
- stuff)
-(define (f box.b)
- stuff)
-(define (f (box x))
- stuff)
 
 TODO robby's request
 

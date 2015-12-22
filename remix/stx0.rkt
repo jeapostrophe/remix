@@ -164,7 +164,7 @@
              (syntax->list
               #'(output ...)))])))
 
-(define-syntax (the-#%braces stx)
+(define-syntax (#%braces stx)
   (syntax-parse stx
     [(_ input-tokens ...)
      (shunting-yard:consume-input
@@ -172,7 +172,7 @@
       empty
       empty)]))
 
-(define-syntax (#%braces stx)
+(define-syntax (block-#%braces stx)
   (syntax-parse stx
     [(_ s:semi-seq)
      (syntax-case #'(s.semi-form ...) ()
@@ -376,7 +376,6 @@
          (rename-out [... …]) ;; \ldots
          #%datum
          quote
-         unquote
          module
          module*
          module+

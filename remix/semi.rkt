@@ -9,17 +9,13 @@
   (define-syntax-class not-semi
     #:literals (#%semi unquote)
     (pattern (~and (~not #%semi)
-                   (~not (unquote #%semi)))))
+                   (~not (unquote . _)))))
   (define-splicing-syntax-class semi-piece
     #:literals (#%semi unquote)
     #:attributes (it)
-    (pattern (~seq #%semi it))
+    (pattern (unquote it))
     (pattern (~seq sp:not-semi ... #%semi)
-             #:attr it #'(sp ...))
-    (pattern (~seq sp:not-semi ... (~and uqs (unquote #%semi)))
-             #:attr it
-             (with-syntax ([semi-#%braces (datum->syntax #'uqs '#%braces)])
-               #'(semi-#%braces sp ...))))
+             #:attr it #'(sp ...)))
   (define-splicing-syntax-class semi-seq
     #:attributes ([semi-form 1] [tail-form 1])
     (pattern (~seq s:semi-piece ... tail-form:not-semi ...)

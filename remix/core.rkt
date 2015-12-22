@@ -12,4 +12,5 @@
 (provide (rename-out
           [remix-module-begin #%module-begin])
          #%semi
+         unquote
          require)
