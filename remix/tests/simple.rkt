@@ -373,7 +373,8 @@ def x4
 (module+ test
   ;; You will get an allocation function named #:alloc
   (def [posn p1] (posn.#:alloc [x 5] [y 7]))
-  ;; XXX (def [posn p1] #:alloc [x 5] [y 7])
+  ;; XXX (def [posn p1] #:alloc [x 5] [y 7]) <--- def transformer for allocation
+  ;; XXX (def [posn p1] (posn [x 5] [y 7])) <--- default use is allocation
   ;; And accessors
   {p1.x ≡ 5}
   {p1.y ≡ 7}
@@ -381,8 +382,7 @@ def x4
   ;; that gave us access to these. We can, of course, just call them
   ;; directly through posn.
   {(posn.x p1) ≡ 5}
-  ;; You will also get a copying function (XXX: Should it be named
-  ;; `copy`? `update`? My analogy here is with hash-set)
+  ;; You will also get a copying function
   (def [posn p2] (p1.#:set [y {p1.y + 2}]))
   ;; Notice that these built-in functions are keywords, so that they
   ;; can't conflict with the fields you've defined.
@@ -418,7 +418,8 @@ def x4
   {qpq1.y ≡ 2}
   {qpq1.z ≡ 3})
 
-;; XXX Does it do the "right thing" for copying?
+;; XXX Does it do the "right thing" for copying? (i.e. when a parent
+;; copies, do the child's fields get copied as is)
 
 ;; A layout's fields may be specified as other layouts. When the first
 ;; field is a layout, this is not necessarily the same thing as a
@@ -507,3 +508,4 @@ def x4
   {even1.o.e.e ≡ 0}
   {even1.o.e.o.o ≡ 1}
   {even1.o.e.o.e.e ≡ 0})
+
