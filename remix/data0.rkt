@@ -104,6 +104,9 @@
               #:methods remix:gen:dot-transformer
               [(define (dot-transform _ stx)
                  (syntax-parse stx
+                   [(_dot me:id (x:interface-member . args))
+                    (quasisyntax/loc stx
+                      (remix:#%app (remix:#%app (remix:#%dot me x)) . args))]
                    [(_dot me:id x:interface-member)
                     (get-rhs-id stx #'x)]
                    [(_dot me:id . (~and x+more (x:interface-member . more)))
@@ -115,6 +118,11 @@
               #:methods remix:gen:app-dot-transformer
               [(define (app-dot-transform _ stx)
                  (syntax-parse stx
+                   [(_app (_dot me:id (x:interface-member . args)) . body)
+                    (quasisyntax/loc stx
+                      (remix:#%app
+                       (remix:#%app (remix:#%app (remix:#%dot me x)) . args)
+                       . body))]
                    [(_app (_dot me:id x:interface-member) . body)
                     (quasisyntax/loc stx
                       (#,(get-rhs-id stx #'x) . body))]
@@ -416,6 +424,43 @@
                      layout-planner-mutable?)
          layout-immutable
          layout-mutable)
+
+;; theory & model
+
+(define-syntax theory
+  (singleton-struct
+   #:property prop:procedure
+   (λ (_ stx)
+     (raise-syntax-error 'theory "Illegal outside def" stx))
+   #:methods remix:gen:def-transformer
+   [(define (def-transform _ stx)
+      (syntax-parse stx
+        #:literals (remix:#%brackets remix:def theory)
+        [(remix:def (remix:#%brackets theory thy:id)
+                    v:id ...)
+         (syntax/loc stx
+           (remix:def (remix:#%brackets phase0:layout thy)
+                      v ...))]))]))
+
+(define-syntax model
+  (singleton-struct
+   #:property prop:procedure
+   (λ (_ stx)
+     (raise-syntax-error 'model "Illegal outside def" stx))
+   #:methods remix:gen:def-transformer
+   [(define (def-transform _ stx)
+      (syntax-parse stx
+        #:literals (remix:#%brackets remix:def model)
+        [(remix:def (remix:#%brackets model thy:id mod:id)
+                    (remix:#%brackets f:id v:expr) ...)
+         (syntax/loc stx
+           (remix:def (remix:#%brackets thy mod)
+                      (remix:#%app
+                       (remix:#%dot thy #:alloc)
+                       (remix:#%brackets f v) ...)))]))]))
+
+(provide theory
+         model)
 
 ;; xxx (dynamic-)interface
 ;; xxx data

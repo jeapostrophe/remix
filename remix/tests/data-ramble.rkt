@@ -1,16 +1,4 @@
 ;; THEORIES + MODELS
-;; A theory is a specification of some values
-(def [theory Monoid]
-  op id)
-;; XXX specify properties
-
-;; A model is an object that satisfies the theory
-(def zero 0)
-(def [model Monoid Nat+Monoid]
-  [op +]
-  ;; XXX lift non-identifiers
-  [id zero])
-;; XXX verify properties
 
 ;; INTERFACES + OBJECTS
 ;; An interface is just a vtable specification (theory)

@@ -509,3 +509,29 @@ def x4
   {even1.o.e.o.o ≡ 1}
   {even1.o.e.o.e.e ≡ 0})
 
+;; Theories & Models
+
+;; A theory is a specification of some values
+;; XXX add parameters
+(def [theory Monoid]
+  op id)
+;; XXX specify properties
+
+;; A model is an object that satisfies the theory
+(def [model Monoid Monoid-Nat:+]
+  [op +]
+  [id 0])
+;; XXX verify properties
+
+(def [model Monoid Monoid-Nat:*]
+  [op *]
+  [id 1])
+
+(module+ test
+  (def (monoid-id-test [Monoid m] a)
+    (≡ ((m.op) a m.id) ;; (#%app (#%dot m op) a (#%dot m id))
+       m.(op m.id a)   ;;    (#%app (#%dot m (#%app op (#%dot m id) a)))
+                       ;; => (#%app (#%app (#%dot m op)) (#%dot m id) a)
+       ))
+  (monoid-id-test Monoid-Nat:+ 5)
+  (monoid-id-test Monoid-Nat:* 5))

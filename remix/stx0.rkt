@@ -199,15 +199,18 @@
      #:declare dt (static dot-transformer? "dot transformer")
      (dot-transform (attribute dt.value) stx)]))
 
+;; XXX This should work differently... add a method to dot-transformer
+;; that has a sensible default and let it pass out a def block to put
+;; around the apply.
 (begin-for-syntax
   (define-generics app-dot-transformer
     (app-dot-transform app-dot-transformer stx)))
 (define-syntax (remix-#%app stx)
   (syntax-parse stx
     #:literals (#%dot)
-    [(_ (#%dot x ... (#%dot y ...)) . body)
+    [(_ (#%dot x ... (#%dot . y)) . body)
      (syntax/loc stx
-       (remix-#%app (#%dot x ... y ...) . body))]
+       (remix-#%app (#%dot x ... . y) . body))]
     [(_ (#%dot adt . (~not (x ... (#%dot . _) . _))) . body)
      #:declare adt (static app-dot-transformer? "app-dot transformer")
      (app-dot-transform (attribute adt.value) stx)]
