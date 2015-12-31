@@ -35,16 +35,18 @@
   (define-syntax (phase1:static-interface stx)
     (syntax-parse stx
       #:literals (remix:#%brackets)
-      [(_si (remix:#%brackets
-             lhs:interface-member rhs:id
-             (~optional
-              (~seq #:is rhs-dt:id)
-              #:defaults ([rhs-dt #'#f])))
-            ...
-            (~optional
-             (~seq #:extensions
-                   extension ...)
-             #:defaults ([[extension 1] '()])))
+      [(_si 
+        ;; XXX make expandable position
+        (remix:#%brackets
+         lhs:interface-member rhs:id
+         (~optional
+          (~seq #:is rhs-dt:id)
+          #:defaults ([rhs-dt #'#f])))
+        ...
+        (~optional
+         (~seq #:extensions
+               extension ...)
+         #:defaults ([[extension 1] '()])))
        (with-syntax* ([int-name (or (syntax-local-name) 'static-interface)]
                       [(def-rhs ...)
                        (for/list ([lhs (in-list
@@ -246,6 +248,7 @@
            (~optional (~and (~seq #:rep (~var rep (static layout-planner?
                                                           "layout planner"))))
                       #:defaults ([rep #f]))
+           ;; XXX make expandable position
            F:field ...)
          (define parent-v (attribute parent-va))
          (define this-rep-id (attribute rep))
@@ -436,10 +439,15 @@
    [(define (def-transform _ stx)
       (syntax-parse stx
         #:literals (remix:#%brackets remix:def theory)
+        ;; XXX support parameters
         [(remix:def (remix:#%brackets theory thy:id)
+                    ;; XXX support properties
+                    ;; XXX make expandable position
                     v:id ...)
          (syntax/loc stx
            (remix:def (remix:#%brackets phase0:layout thy)
+                      ;; XXX add a property for theories
+                      ;; XXX support defaults
                       v ...))]))]))
 
 (define-syntax model
@@ -452,7 +460,12 @@
       (syntax-parse stx
         #:literals (remix:#%brackets remix:def model)
         [(remix:def (remix:#%brackets model thy:id mod:id)
+                    ;; XXX make expandable position
                     (remix:#%brackets f:id v:expr) ...)
+         ;; XXX support verification of properties
+         ;; XXX support theory parameters
+         ;; XXX check that thy is a theory
+         ;; XXX check that f is complete and apply defaults if not
          (syntax/loc stx
            (remix:def (remix:#%brackets thy mod)
                       (remix:#%app
@@ -463,4 +476,5 @@
          model)
 
 ;; xxx (dynamic-)interface
+;; xxx class
 ;; xxx data

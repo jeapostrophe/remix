@@ -512,10 +512,8 @@ def x4
 ;; Theories & Models
 
 ;; A theory is a specification of some values
-;; XXX add parameters
 (def [theory Monoid]
   op id)
-;; XXX specify properties
 (module+ test
   ;; You can write generic functions over a theory. This imposes a
   ;; single constant cost to access the operations (basically, a
@@ -528,7 +526,6 @@ def x4
 (def [model Monoid Monoid-Nat:+]
   [op +]
   [id 0])
-;; XXX verify properties
 
 (def [model Monoid Monoid-Nat:*]
   [op *]
@@ -542,3 +539,6 @@ def x4
   ;; we can imagine it might be inlinable.
   {((Monoid-Nat:+.op) 6 Monoid-Nat:+.id) ≡ Monoid-Nat:+.(op Monoid-Nat:+.id 6)})
 
+;; Interfaces & Class
+
+(def [interface ])
