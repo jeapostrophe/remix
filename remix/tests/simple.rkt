@@ -516,6 +516,13 @@ def x4
 (def [theory Monoid]
   op id)
 ;; XXX specify properties
+(module+ test
+  ;; You can write generic functions over a theory. This imposes a
+  ;; single constant cost to access the operations (basically, a
+  ;; vector-ref) and the operation couldn't be inlined. (Although if
+  ;; the generic function were inlined, then it could, presumably.)
+  (def (monoid-id-test [Monoid m] a)
+    {((m.op) a m.id) ≡ m.(op m.id a)}))
 
 ;; A model is an object that satisfies the theory
 (def [model Monoid Monoid-Nat:+]
@@ -528,10 +535,10 @@ def x4
   [id 1])
 
 (module+ test
-  (def (monoid-id-test [Monoid m] a)
-    (≡ ((m.op) a m.id) ;; (#%app (#%dot m op) a (#%dot m id))
-       m.(op m.id a)   ;;    (#%app (#%dot m (#%app op (#%dot m id) a)))
-                       ;; => (#%app (#%app (#%dot m op)) (#%dot m id) a)
-       ))
+  ;; You can pass the model explicitly to functions over the theory
   (monoid-id-test Monoid-Nat:+ 5)
-  (monoid-id-test Monoid-Nat:* 5))
+  (monoid-id-test Monoid-Nat:* 5)
+  ;; Or you can use it directly. This works exactly the same, although
+  ;; we can imagine it might be inlinable.
+  {((Monoid-Nat:+.op) 6 Monoid-Nat:+.id) ≡ Monoid-Nat:+.(op Monoid-Nat:+.id 6)})
+
