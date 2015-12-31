@@ -384,6 +384,7 @@ def x4
   {(posn.x p1) ≡ 5}
   ;; You will also get a copying function
   (def [posn p2] (p1.#:set [y {p1.y + 2}]))
+  ;; XXX (def [posn p2] (posn p1 [y {p1.y + 2}])) <---- default use with expr is copy
   ;; Notice that these built-in functions are keywords, so that they
   ;; can't conflict with the fields you've defined.
   {p2.x ≡ 5}
@@ -539,6 +540,48 @@ def x4
   ;; we can imagine it might be inlinable.
   {((Monoid-Nat:+.op) 6 Monoid-Nat:+.id) ≡ Monoid-Nat:+.(op Monoid-Nat:+.id 6)})
 
-;; Interfaces & Class
+;; Interfaces & Classes
 
-(def [interface ])
+(def [interface 2d<%>]
+  translate
+  area)
+
+(def [interface Circle<%>]
+  ;; xxx make a macro for "interface of layout's fields"
+  c r)
+
+(def [class Circle]
+  (def [clayout]
+    circle)
+  (def ([new] x y r)
+    (this.#:alloc [c (posn.#:alloc [x x] [y y])]
+                  [r r]))
+  
+  ;; xxx make a macro from "layout's fields implements this interface"
+  (def [implements Circle<%>]
+    [(c) this.c]
+    [(r) this.r])
+  
+  (def [impl 2d<%>]
+    [(translate x y)
+     {this.#:set
+      [c (this.c.#:set [x {x + this.c.x}]
+                       [y {y + this.c.y}])]}]
+    [(area)
+     {3 * this.r * this.r}]))
+
+;; XXX allow w/o #:new?
+;; XXX
+#;#; 
+(def [Circle C1] (Circle.#:new 1 2 3))
+(module+ test
+  {C1.Circle<%>.c.x ≡ 1}
+  {C1.Circle<%>.c.y ≡ 2}
+  {C1.Circle<%>.r ≡ 3}
+  {(C1.2d<%>.area) ≡ 27}
+  (def [Circle C1′] (C1.2d<%>.translate 3 2))
+  {C1′.Circle<%>.c.x ≡ 4}
+  {C1′.Circle<%>.c.y ≡ 4}
+  {C1′.Circle<%>.r ≡ 3})
+
+

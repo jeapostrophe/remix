@@ -14,6 +14,7 @@
                                  syntax/parse
                                  racket/generic
                                  (prefix-in remix: remix/stx0)))
+         racket/stxparam
          racket/unsafe/ops
          racket/performance-hint
          (prefix-in remix: remix/stx0))
@@ -441,7 +442,7 @@
         #:literals (remix:#%brackets remix:def theory)
         ;; XXX support parameters
         [(remix:def (remix:#%brackets theory thy:id)
-                    ;; XXX support properties
+                    ;; XXX support properties (including type)
                     ;; XXX make expandable position
                     v:id ...)
          (syntax/loc stx
@@ -475,6 +476,47 @@
 (provide theory
          model)
 
-;; xxx (dynamic-)interface
-;; xxx class
-;; xxx data
+;; Interfaces & Classes
+
+(define-syntax interface
+  (singleton-struct
+   #:property prop:procedure
+   (λ (_ stx)
+     (raise-syntax-error 'interface "Illegal outside def" stx))
+   #:methods remix:gen:def-transformer
+   [(define (def-transform _ stx)
+      ;; XXX
+      #'(void))]))
+
+(define-syntax-parameter clayout
+  (λ (stx)
+    (raise-syntax-error 'clayout "Illegal outside class" stx)))
+(define-syntax-parameter new
+  (λ (stx)
+    (raise-syntax-error 'new "Illegal outside class" stx)))
+(define-syntax-parameter this
+  (λ (stx)
+    (raise-syntax-error 'this "Illegal outside class" stx)))
+(define-syntax-parameter implements
+  (λ (stx)
+    (raise-syntax-error 'implements "Illegal outside class" stx)))
+
+(define-syntax class
+  (singleton-struct
+   #:property prop:procedure
+   (λ (_ stx)
+     (raise-syntax-error 'class "Illegal outside def" stx))
+   #:methods remix:gen:def-transformer
+   [(define (def-transform _ stx)
+      ;; XXX
+      #'(void))]))
+
+(provide interface
+         clayout
+         new
+         this
+         implements
+         (rename-out implements impl)
+         class)
+
+;; xxx data (fixed set of interfaces)
