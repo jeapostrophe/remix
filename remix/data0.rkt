@@ -478,6 +478,8 @@
 
 ;; Interfaces & Classes
 
+(struct object (interface->implementation rep))
+
 (define-syntax interface
   (singleton-struct
    #:property prop:procedure
@@ -485,21 +487,33 @@
      (raise-syntax-error 'interface "Illegal outside def" stx))
    #:methods remix:gen:def-transformer
    [(define (def-transform _ stx)
-      ;; XXX
-      #'(void))]))
+      (syntax-parse stx
+        #:literals (remix:#%brackets remix:def interface)
+        ;; XXX support parameters?
+        [(remix:def (remix:#%brackets interface int:id)
+                    ;; XXX support properties?
+                    ;; XXX make expandable position
+                    v:id ...)
+         (syntax/loc stx
+           ;; XXX instead, make an int-vtable and then a separate int
+           ;; def transformer that looks at objects.
+           (remix:def (remix:#%brackets theory int)
+                      ;; XXX add a property for interfaces
+                      ;; XXX support defaults?
+                      v ...))]))]))
 
-(define-syntax-parameter clayout
+(define-syntax-parameter representation
   (λ (stx)
-    (raise-syntax-error 'clayout "Illegal outside class" stx)))
+    (raise-syntax-error 'representation "Illegal outside class" stx)))
 (define-syntax-parameter new
   (λ (stx)
     (raise-syntax-error 'new "Illegal outside class" stx)))
 (define-syntax-parameter this
   (λ (stx)
     (raise-syntax-error 'this "Illegal outside class" stx)))
-(define-syntax-parameter implements
+(define-syntax-parameter implementation
   (λ (stx)
-    (raise-syntax-error 'implements "Illegal outside class" stx)))
+    (raise-syntax-error 'implementation "Illegal outside class" stx)))
 
 (define-syntax class
   (singleton-struct
@@ -508,15 +522,17 @@
      (raise-syntax-error 'class "Illegal outside def" stx))
    #:methods remix:gen:def-transformer
    [(define (def-transform _ stx)
+      ;; XXX ensure everything is expandable
       ;; XXX
       #'(void))]))
 
 (provide interface
-         clayout
+         representation
+         (rename-out [representation rep])
          new
          this
-         implements
-         (rename-out implements impl)
+         implementation
+         (rename-out [implementation impl])
          class)
 
 ;; xxx data (fixed set of interfaces)

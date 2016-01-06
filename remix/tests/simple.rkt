@@ -521,6 +521,7 @@ def x4
   ;; vector-ref) and the operation couldn't be inlined. (Although if
   ;; the generic function were inlined, then it could, presumably.)
   (def (monoid-id-test [Monoid m] a)
+    ;; Notice the syntax `m.(op x y)` as short-hand for `((m.op) x y)`
     {((m.op) a m.id) ≡ m.(op m.id a)}))
 
 ;; A model is an object that satisfies the theory
@@ -550,15 +551,16 @@ def x4
   ;; xxx make a macro for "interface of layout's fields"
   c r)
 
+;; A class is a representation, a constructor, and implementations of
+;; interfaces.
 (def [class Circle]
-  (def [clayout]
-    circle)
+  (def [rep] circle) ;; rep = representation
   (def ([new] x y r)
     (this.#:alloc [c (posn.#:alloc [x x] [y y])]
                   [r r]))
   
   ;; xxx make a macro from "layout's fields implements this interface"
-  (def [implements Circle<%>]
+  (def [implementation Circle<%>]
     [(c) this.c]
     [(r) this.r])
   
@@ -570,11 +572,11 @@ def x4
     [(area)
      {3 * this.r * this.r}]))
 
-;; XXX allow w/o #:new?
-;; XXX
-#;#; 
+;; XXX allow w/o #:new?, like layout
 (def [Circle C1] (Circle.#:new 1 2 3))
 (module+ test
+  ;; If you know something is a particular class, then you can access
+  ;; its implementations directly. This is more efficient.
   {C1.Circle<%>.c.x ≡ 1}
   {C1.Circle<%>.c.y ≡ 2}
   {C1.Circle<%>.r ≡ 3}
@@ -582,6 +584,22 @@ def x4
   (def [Circle C1′] (C1.2d<%>.translate 3 2))
   {C1′.Circle<%>.c.x ≡ 4}
   {C1′.Circle<%>.c.y ≡ 4}
-  {C1′.Circle<%>.r ≡ 3})
+  {C1′.Circle<%>.r ≡ 3}
+  ;; In contrast, when you access them as their interfaces, a lookup
+  ;; is done.
+  (def [2d<%> C1-as-2d] C1)
+  {C1-as-2d.(area) ≡ 27}
+  (def [Circle<%> C1-as-Circ] C1)
+  {C1-as-Circ.c.x ≡ 1}
+  {C1-as-Circ.c.y ≡ 2}
+  {C1-as-Circ.r ≡ 3})
 
-
+(module+ test
+  ;; Like theories, you can define functions that are generic over an
+  ;; interface.
+  (def (squarea [2d<%> o])
+    {o.(area) * o.(area)})
+  {(squarea C1) ≡ 729}
+  ;; The default behavior of class dot-transformers on unknown methods
+  ;; is to treat it as a generic function.
+  {C1.(squarea) ≡ 729})
