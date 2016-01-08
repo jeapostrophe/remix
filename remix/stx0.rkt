@@ -183,6 +183,20 @@
         (syntax/loc stx
           (remix-block sf ... (the-#%braces s.tail-form ...)))])]))
 
+(require (for-syntax (prefix-in dangerous:stxparamkey: racket/private/stxparamkey)))
+(begin-for-syntax
+  (define (syntax-parameter? id)
+    ;; Copied from syntax-parameter-value
+    (let* ([v (syntax-local-value id (λ () #f))]
+           [v (if (set!-transformer? v)
+                      (set!-transformer-procedure v)
+                      v)])
+      (dangerous:stxparamkey:syntax-parameter? v)))
+  (define (syntax-local-value/maybe-syntax-parameter id)
+    (if (syntax-parameter? id)
+        (syntax-parameter-value id)
+        (syntax-local-value id (λ () #f)))))
+
 (begin-for-syntax
   (define-generics dot-transformer
     (dot-transform dot-transformer stx)))

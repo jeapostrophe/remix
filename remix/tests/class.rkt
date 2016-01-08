@@ -16,17 +16,18 @@
 ;; A class is a representation, a constructor, and implementations of
 ;; interfaces.
 (def [class Circle]
-  (def [rep] circle) ;; rep = representation
-  (def ([new] x y r)
-    (this.#:alloc [c (posn.#:alloc [x x] [y y])]
-                  [r r]))
+  (rep circle) ;; rep = representation
+  (new (x y r)
+   (Current.#:alloc
+    [c (posn.#:alloc [x x] [y y])]
+    [r r]))
   
   ;; xxx make a macro from "layout's fields implements this interface"
-  (def [implementation Circle<%>]
+  (implementation Circle<%>
     [(c) this.c]
     [(r) this.r])
   
-  (def [impl 2d<%>]
+  (impl 2d<%>
     [(translate x y)
      {this.#:set
       [c (this.c.#:set [x {x + this.c.x}]
@@ -35,7 +36,11 @@
      {3 * this.r * this.r}]))
 
 ;; XXX allow w/o #:new?, like layout
-#;(def [Circle C1] (Circle.#:new 1 2 3))
+
+;; XXX
+#;
+(def [Circle C1] (Circle.#:new 1 2 3))
+;; XXX
 #;
 (module+ test
   ;; If you know something is a particular class, then you can access
@@ -57,6 +62,7 @@
   {C1-as-Circ.c.y ≡ 2}
   {C1-as-Circ.r ≡ 3})
 
+;; XXX
 #;
 (module+ test
   ;; Like theories, you can define functions that are generic over an
