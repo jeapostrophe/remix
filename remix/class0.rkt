@@ -4,6 +4,7 @@
                      racket/syntax
                      racket/generic
                      racket/set
+                     racket/match
                      syntax/id-set
                      remix/stx/singleton-struct0
                      (prefix-in remix: remix/stx0))
@@ -61,11 +62,13 @@
 (begin-for-syntax
   (define-generics class)
   (struct class-expansion-data
-    (cls-id [rep-id #:mutable] new-id [new-found? #:mutable] interface-set))
-  (define (empty-class-expansion-data cls new-id)
-    (class-expansion-data cls #f new-id #f (mutable-bound-id-set)))
-  (define current-class-expansion-data
-    (make-parameter #f)))
+    (cls-id [rep-id #:mutable] [new-found? #:mutable] interface-set))
+  (define (empty-class-expansion-data cls)
+    (class-expansion-data cls #f #f (mutable-bound-id-set))))
+
+(define-syntax default-ced #f)
+(define-rename-transformer-parameter current-ced
+  (make-rename-transformer #'default-ced))
 
 (define-syntax class
   (singleton-struct
@@ -78,96 +81,97 @@
         #:literals (remix:#%brackets remix:def class)
         [(remix:def (remix:#%brackets class cls:id)
                     body-expr ...)
-         (define ctxt (syntax-local-context))
-         (define cls-stop-list (list #'remix:def #'remix:#%brackets))
-         (with-syntax ([cls-new (format-id #f "~a-new" #'cls)]
-                       [cls-Current (format-id #f "~a-Current" #'cls)]
-                       [cls-alloc (format-id #f "~a-alloc" #'cls)])
-           (define the-ced (empty-class-expansion-data #'cls #'cls-new))
-           (with-syntax ([(new-body ...)
-                          (parameterize ([current-class-expansion-data the-ced])
-                            (for/list ([be (in-list (syntax->list #'(body-expr ...)))])
-                              (local-expand/capture-lifts
-                               be
-                               ctxt cls-stop-list)))])
-             (printf "after body local-expand\n")
-             (with-syntax ([((int cls-int-impl) ...)
-                            ;; XXX
-                            '()])
-               (syntax/loc stx
-                 (begin
-                   (remix:def (remix:#%brackets static-interface cls)
-                              (remix:#%brackets #:new cls-new)
-                              (remix:#%brackets int cls-int-impl)
-                              ...
-                              #:extensions
-                              #:methods gen:class
-                              [])
-                   (remix:def (remix:#%brackets static-interface cls-Current)
-                              (remix:#%brackets #:alloc cls-alloc))
-                   ;; XXX bind this
-                   (splicing-syntax-parameterize
-                       ([Current (rename-dot-transformer #'cls-Current)])
-                     new-body ...))))))]))]))
+         (syntax/loc stx
+           (begin
+             (define-syntax the-ced (empty-class-expansion-data #'cls))
+             (splicing-syntax-parameterize
+                 ([current-ced
+                   (make-rename-transformer #'the-ced)])
+               body-expr ...)
+             (class-after-body the-ced)))]))]))
 
-(begin-for-syntax
-  (struct rename-dot-transformer (id)
-    #:methods remix:gen:dot-transformer
-    [(define/generic super-dt dot-transform)
-     (define (dot-transform rdt stx)
-       (super-dt (syntax-local-value (rename-dot-transformer-id rdt)) stx))]))
+(define-syntax (class-after-body stx)
+  (syntax-parse stx
+    [(_ the-ced)
+     #:declare the-ced (static class-expansion-data? "class expansion data")
+     (match-define (class-expansion-data cls-id rep-id new-found? interface-set)
+       (attribute the-ced.value))
+     (unless new-found?
+       (raise-syntax-error 'class
+                           (format "no constructor found for class ~a" cls-id)
+                           stx))
+     (with-syntax*
+       ([cls cls-id]
+        [rep rep-id]
+        [cls-new (format-id #f "~a-new" #'cls)]
+        [cls-Current (format-id #f "~a-Current" #'cls)]
+        [cls-alloc (format-id #f "~a-alloc" #'cls)]
+        [((int cls-int-impl) ...)
+         ;; XXX
+         '()])
+       (syntax/loc stx
+         (begin
+           (remix:def (remix:#%brackets static-interface cls-Current)
+                      (remix:#%brackets #:alloc cls-alloc))
+         (splicing-syntax-parameterize
+             ([Current (make-rename-transformer #'cls-Current)])
+           (remix:def (remix:#%brackets static-interface cls)
+                      (remix:#%brackets #:new cls-new)
+                      (remix:#%brackets int cls-int-impl)
+                      ...
+                      #:extensions
+                      #:methods gen:class
+                      [])))))]))
 
 (define-syntax (representation stx)
-  (cond
-    [(current-class-expansion-data)
-     => (λ (ced)
-          (syntax-parse stx
-            [(_ l:id)
-             ;; XXX ensure l is layout
-             (cond
-               [(class-expansion-data-rep-id ced)
-                (raise-syntax-error
-                 'representation
-                 (format "Duplicate definition of representation for class ~a"
-                         (syntax-e (class-expansion-data-cls-id ced)))
-                 stx)]
-               [else
-                (set-class-expansion-data-rep-id! ced #'l)])
-             #'(void)]))]
-    [else
-     (raise-syntax-error 'representation "Illegal outside class" stx)]))
+  (define ced
+    (or (syntax-local-value #'current-ced (λ () #f))
+        (raise-syntax-error 'representation "Illegal outside class" stx)))
+  (syntax-parse stx
+    [(_ l:id)
+     ;; XXX ensure l is layout
+     (cond
+       [(class-expansion-data-rep-id ced)
+        (raise-syntax-error
+         'representation
+         (format "Duplicate definition of representation for class ~a"
+                 (syntax-e (class-expansion-data-cls-id ced)))
+         stx)]
+       [else
+        (set-class-expansion-data-rep-id! ced #'l)
+        #'(void)])]))
 
 (define-syntax (new stx)
-  (cond
-    [(current-class-expansion-data)
-     => (λ (ced)
-          (syntax-parse stx
-            [(_ args . body)
-             (when (class-expansion-data-new-found? ced)
-               (raise-syntax-error
-                 'new
-                 (format "Duplicate definition of constructor for class ~a"
-                         (syntax-e (class-expansion-data-cls-id ced)))
-                 stx))
-             (set-class-expansion-data-new-found?! ced #t)
-             (with-syntax ([cls-new (class-expansion-data-new-id ced)])
-               (syntax/loc stx
-                 (remix:def (cls-new . args) . body)))]))]
-    [else
-     (raise-syntax-error 'new "Illegal outside class" stx)]))
+  (define ced
+    (or (syntax-local-value #'current-ced (λ () #f))
+        (raise-syntax-error 'new "Illegal outside class" stx)))
+  (syntax-parse stx
+    [(_ args . body)
+     (when (class-expansion-data-new-found? ced)
+       (raise-syntax-error
+        'new
+        (format "Duplicate definition of constructor for class ~a"
+                (syntax-e (class-expansion-data-cls-id ced)))
+        stx))
+     (set-class-expansion-data-new-found?!
+      ced
+      (λ (new-id)
+        (with-syntax ([cls-new new-id])
+          (syntax/loc stx
+            (remix:def (cls-new . args) . body)))))
+     #'(void)]))
 
 (define-syntax (implementation stx)
-  (cond
-    [(current-class-expansion-data)
-     => (λ (ced)
-          ;; XXX
-          #'(void))]
-    [else
-     (raise-syntax-error 'implementation "Illegal outside class" stx)]))
+  (define ced
+    (or (syntax-local-value #'current-ced (λ () #f))
+        (raise-syntax-error 'implementation "Illegal outside class" stx)))
+  ;; XXX
+  #'(void))
 
-(define-syntax-parameter Current
-  (λ (stx)
-    (raise-syntax-error 'Current "Illegal outside class definitions" stx)))
+(remix:def (remix:#%brackets static-interface default-Current))
+(define-rename-transformer-parameter Current
+  (make-rename-transformer #'default-Current))
+
 (define-syntax-parameter this
   (λ (stx)
     (raise-syntax-error 'this "Illegal outside class definitions" stx)))
