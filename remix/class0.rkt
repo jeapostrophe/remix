@@ -3,9 +3,9 @@
                      syntax/parse
                      racket/syntax
                      racket/generic
-                     racket/set
                      racket/match
-                     syntax/id-set
+                     racket/dict
+                     syntax/id-table
                      remix/stx/singleton-struct0
                      (prefix-in remix: remix/stx0))
          racket/stxparam
@@ -18,7 +18,8 @@
 
 (begin-for-syntax
   (define-generics interface
-    (interface-vtable interface)))
+    (interface-vtable interface)
+    (interface-vtable-id interface)))
 
 (define-syntax interface
   (singleton-struct
@@ -57,14 +58,15 @@
                           ...
                           #:extensions
                           #:methods gen:interface
-                          [(define (interface-vtable _) #'int-vtable)]))))]))]))
+                          [(define (interface-vtable _) #'int-vtable)
+                           (define (interface-vtable-id _) #'int-vtable-id)]))))]))]))
 
 (begin-for-syntax
   (define-generics class)
   (struct class-expansion-data
     (cls-id [rep-id #:mutable] [new-found? #:mutable] interface-set))
   (define (empty-class-expansion-data cls)
-    (class-expansion-data cls #f #f (mutable-bound-id-set))))
+    (class-expansion-data cls #f #f (make-bound-id-table))))
 
 (define-syntax default-ced #f)
 (define-rename-transformer-parameter current-ced
@@ -103,25 +105,45 @@
      (with-syntax*
        ([cls cls-id]
         [rep rep-id]
+        [cls-vtables (format-id #f "~a-vtables" #'cls)]
         [cls-new (format-id #f "~a-new" #'cls)]
         [cls-Current (format-id #f "~a-Current" #'cls)]
+        [cls-alloc* (format-id #f "~a-alloc*" #'cls)]
         [cls-alloc (format-id #f "~a-alloc" #'cls)]
-        [((int cls-int-impl) ...)
-         ;; XXX
-         '()])
+        [((int int-vtable cls-int-impl cls-int-impl-def) ...)
+         (for/list ([(int int-internal) (in-dict interface-set)])
+           (define cls-int-impl (format-id #f "~a-~a" #'cls int))
+           (match-define (list int-vtable-id cls-int-impl-def)
+             (int-internal cls-int-impl))
+           (list int int-vtable-id cls-int-impl cls-int-impl-def))]
+        [cls-new-def (new-found? #'cls-new)])
        (syntax/loc stx
          (begin
+           (define (cls-alloc* the-rep)
+             (object cls-vtables the-rep))
+           (define-syntax (cls-alloc stx)
+             (syntax-parse stx
+               [(_ . args)
+                (syntax/loc stx
+                  (cls-alloc* (remix:#%app (remix:#%dot rep #:alloc) . args)))]))
            (remix:def (remix:#%brackets static-interface cls-Current)
                       (remix:#%brackets #:alloc cls-alloc))
-         (splicing-syntax-parameterize
-             ([Current (make-rename-transformer #'cls-Current)])
-           (remix:def (remix:#%brackets static-interface cls)
-                      (remix:#%brackets #:new cls-new)
-                      (remix:#%brackets int cls-int-impl)
-                      ...
-                      #:extensions
-                      #:methods gen:class
-                      [])))))]))
+           (splicing-syntax-parameterize
+               ([Current (make-rename-transformer #'cls-Current)])
+             cls-new-def
+             cls-int-impl-def ...
+             ;; XXX bind cls-this
+             (remix:def (remix:#%brackets static-interface cls)
+                        (remix:#%brackets #:new cls-new)
+                        (remix:#%brackets int cls-int-impl)
+                        ...
+                        #:extensions
+                        #:methods gen:class
+                        []))
+           (define cls-vtables
+             (make-immutable-hasheq
+              (list (cons int-vtable cls-int-impl)
+                    ...))))))]))
 
 (define-syntax (representation stx)
   (define ced
@@ -165,16 +187,35 @@
   (define ced
     (or (syntax-local-value #'current-ced (λ () #f))
         (raise-syntax-error 'implementation "Illegal outside class" stx)))
-  ;; XXX
-  #'(void))
+  (syntax-parse stx
+    [(_ int . int-body)
+     #:declare int (static interface? "interface")
+     (define is (class-expansion-data-interface-set ced))
+     (when (dict-has-key? is #'int)
+       (raise-syntax-error
+        'implementation
+        (format "duplication definition of implementation for interface ~a" #'int)
+        stx))
+     (with-syntax ([int-vtable-id (interface-vtable-id (attribute int.value))]
+                   [int-vtable (interface-vtable (attribute int.value))])
+       (dict-set! is #'int
+                  (λ (cls-impl-id)
+                    (list
+                     #'int-vtable-id
+                     (with-syntax ([cls-impl cls-impl-id])
+                       (syntax/loc stx
+                         (remix:def (remix:#%brackets model int-vtable cls-impl)
+                                    ;; XXX manipulate and bind this
+                                    . int-body)))))))
+     #'(void)]))
 
 (remix:def (remix:#%brackets static-interface default-Current))
 (define-rename-transformer-parameter Current
   (make-rename-transformer #'default-Current))
 
-(define-syntax-parameter this
-  (λ (stx)
-    (raise-syntax-error 'this "Illegal outside class definitions" stx)))
+(remix:def (remix:#%brackets static-interface default-this))
+(define-rename-transformer-parameter this
+  (make-rename-transformer #'default-this))
 
 (provide interface
          representation

@@ -1,7 +1,8 @@
 #lang remix
 (require remix/stx0
          remix/class0
-         remix/num/gen0)
+         remix/num/gen0
+         "layout.rkt")
 (module+ test
   (require remix/test0))
 
@@ -24,16 +25,17 @@
   
   ;; xxx make a macro from "layout's fields implements this interface"
   (implementation Circle<%>
-    [(c) this.c]
-    [(r) this.r])
+    [c (λ () this.c)]
+    [r (λ () this.r)])
   
   (impl 2d<%>
-    [(translate x y)
-     {this.#:set
-      [c (this.c.#:set [x {x + this.c.x}]
-                       [y {y + this.c.y}])]}]
-    [(area)
-     {3 * this.r * this.r}]))
+    [translate
+     (λ (x y)
+       {this.#:set
+        [c (this.c.#:set [x {x + this.c.x}]
+                         [y {y + this.c.y}])]})]
+    [area
+     (λ () {3 * this.r * this.r})]))
 
 ;; XXX allow w/o #:new?, like layout
 

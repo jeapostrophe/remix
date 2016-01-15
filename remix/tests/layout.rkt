@@ -158,3 +158,5 @@
   {even1.o.e.e ≡ 0}
   {even1.o.e.o.o ≡ 1}
   {even1.o.e.o.e.e ≡ 0})
+
+(provide posn circle)
