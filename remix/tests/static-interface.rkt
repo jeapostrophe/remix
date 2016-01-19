@@ -10,20 +10,18 @@
 ;; with particular functions.
 (def (example-f x y) x)
 (def (example-g x y) y)
-(def [stx example^]
-  (static-interface
-   [f example-f]
-   [g example-g]))
+(def [static-interface example^]  
+  [f example-f]
+  [g example-g])
 (module+ test
   {(example^.f 1 2) ≡ 1}
   {(example^.g 1 2) ≡ 2})
 
 ;; These static interfaces allow nesting
 (def example2-h 19)
-(def [stx example2^]
-  (static-interface
-   [fg example^]
-   [h example2-h]))
+(def [static-interface example2^]  
+  [fg example^]
+  [h example2-h])
 (module+ test
   {(example2^.fg.f 1 2) ≡ 1}
   {(example2^.fg.g 1 2) ≡ 2}
@@ -52,11 +50,10 @@
 ;; static-interface, rather than the binding itself. In that case, we
 ;; use the keyword #:is and specify another def transformer for
 ;; contexts where the value is in tail position.
-(def [stx example3^]
-  (static-interface
-   ;; NB Perhaps it would be more punny to us [def id]?
-   [fg example2-fg #:is example^]
-   [h example2-h]))
+(def [static-interface example3^]
+  ;; NB Perhaps it would be more punny to us [def id]?
+  [fg example2-fg #:is example^]
+  [h example2-h])
 (def example2-fg 1)
 (module+ test
   {(example3^.fg.f 2) ≡ 1}
