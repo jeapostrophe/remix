@@ -31,20 +31,16 @@
   (impl 2d<%>
     [translate
      (λ (x y)
-       {this.#:set
+       (this.#:set
         [c (this.c.#:set [x {x + this.c.x}]
-                         [y {y + this.c.y}])]})]
+                         [y {y + this.c.y}])]))]
     [area
      (λ () {3 * this.r * this.r})]))
 
 ;; XXX allow w/o #:new?, like layout
 
-;; XXX
-#;
-(def [Circle C1] (Circle.#:new 1 2 3))
-;; XXX
-#;
 (module+ test
+  (def [Circle C1] (Circle.#:new 1 2 3))
   ;; If you know something is a particular class, then you can access
   ;; its implementations directly. This is more efficient.
   {C1.Circle<%>.c.x ≡ 1}
@@ -64,8 +60,6 @@
   {C1-as-Circ.c.y ≡ 2}
   {C1-as-Circ.r ≡ 3})
 
-;; XXX
-#;
 (module+ test
   ;; Like theories, you can define functions that are generic over an
   ;; interface.

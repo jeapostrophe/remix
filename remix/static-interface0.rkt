@@ -202,6 +202,4 @@
                      static-interface?
                      static-interface-members))
 
-
-
 ;; xxx data (fixed set of interfaces)

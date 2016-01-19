@@ -106,15 +106,16 @@
        ([cls cls-id]
         [rep rep-id]
         [cls-vtables (format-id #f "~a-vtables" #'cls)]
+        [cls-this (format-id #f "~a-this" #'cls)]
         [cls-new (format-id #f "~a-new" #'cls)]
         [cls-Current (format-id #f "~a-Current" #'cls)]
         [cls-alloc* (format-id #f "~a-alloc*" #'cls)]
         [cls-alloc (format-id #f "~a-alloc" #'cls)]
         [((int int-vtable cls-int-impl cls-int-impl-def) ...)
          (for/list ([(int int-internal) (in-dict interface-set)])
-           (define cls-int-impl (format-id #f "~a-~a" #'cls int))
+           (define cls-int-impl-id (format-id #f "~a-~a" #'cls int))
            (match-define (list int-vtable-id cls-int-impl-def)
-             (int-internal cls-int-impl))
+             (int-internal cls-int-impl-id #'cls-this))
            (list int int-vtable-id cls-int-impl cls-int-impl-def))]
         [cls-new-def (new-found? #'cls-new)])
        (syntax/loc stx
@@ -132,7 +133,7 @@
                ([Current (make-rename-transformer #'cls-Current)])
              cls-new-def
              cls-int-impl-def ...
-             ;; XXX bind cls-this
+             (remix:def (remix:#%brackets static-interface cls-this))
              (remix:def (remix:#%brackets static-interface cls)
                         (remix:#%brackets #:new cls-new)
                         (remix:#%brackets int cls-int-impl)
@@ -199,7 +200,7 @@
      (with-syntax ([int-vtable-id (interface-vtable-id (attribute int.value))]
                    [int-vtable (interface-vtable (attribute int.value))])
        (dict-set! is #'int
-                  (λ (cls-impl-id)
+                  (λ (cls-impl-id cls-this-id)
                     (list
                      #'int-vtable-id
                      (with-syntax ([cls-impl cls-impl-id])
