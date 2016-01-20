@@ -223,20 +223,20 @@
                (begin-encourage-inline
                  (define (all-name-f v) (rep-accessor v all-f-idx))
                  ...)
-               (define-syntax name
-                 (static-interface
-                  (remix:#%brackets #:alloc name-alloc)
-                  (remix:#%brackets #:set name-set)
-                  (remix:#%brackets #:= name-set)
-                  mutation-interface ...
-                  (remix:#%brackets all-f . all-f-si-rhs)
-                  ...
-                  #:extensions
-                  #:methods gen:layout
-                  [(define (layout-planner-id _)
-                     #'stx-the-planner-id)
-                   (define (layout-field->acc _)
-                     f->acc)])))))]))]))
+               (remix:def
+                (remix:#%brackets static-interface name)
+                (remix:#%brackets #:alloc name-alloc)
+                (remix:#%brackets #:set name-set)
+                (remix:#%brackets #:= name-set)
+                mutation-interface ...
+                (remix:#%brackets all-f . all-f-si-rhs)
+                ...
+                #:extensions
+                #:methods gen:layout
+                [(define (layout-planner-id _)
+                   #'stx-the-planner-id)
+                 (define (layout-field->acc _)
+                   f->acc)]))))]))]))
 
 (provide (rename-out [phase0:layout layout])
          (for-syntax gen:layout

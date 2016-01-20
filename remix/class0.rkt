@@ -116,7 +116,7 @@
            (define cls-int-impl-id (format-id #f "~a-~a" #'cls int))
            (match-define (list int-vtable-id cls-int-impl-def)
              (int-internal cls-int-impl-id #'cls-this))
-           (list int int-vtable-id cls-int-impl cls-int-impl-def))]
+           (list int int-vtable-id cls-int-impl-id cls-int-impl-def))]
         [cls-new-def (new-found? #'cls-new)])
        (syntax/loc stx
          (begin
