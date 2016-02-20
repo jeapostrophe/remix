@@ -36,9 +36,9 @@
 
 (begin-for-syntax
   (struct static-interface-data
-    (si-id members extensions))
-  (define (empty-static-interface-data si-id)
-    (static-interface-data si-id (make-hasheq) (box null))))
+    (members extensions))
+  (define (empty-static-interface-data)
+    (static-interface-data (make-hasheq) (box null))))
 
 (define-syntax default-si #f)
 (define-rename-transformer-parameter current-si
@@ -105,22 +105,21 @@
                body-expr ...)
          (syntax/loc stx
            (begin
-             (define-syntax the-sid (empty-static-interface-data #'the-si))
+             (define-syntax the-sid (empty-static-interface-data))
              (splicing-syntax-parameterize
                  ([current-si
                    (make-rename-transformer #'the-sid)])
                body-expr ...)
-             (static-interface-after-body the-sid)))]))]))
+             (static-interface-after-body the-si the-sid)))]))]))
 
 (define-syntax (static-interface-after-body stx)
   (syntax-parse stx
     #:literals ()
-    [(_me the-sid)
+    [(_me int-name the-sid)
      #:declare the-sid (static static-interface-data? "static interface data")
-     (match-define (static-interface-data si-id members extensions-b)
+     (match-define (static-interface-data members extensions-b)
        (attribute the-sid.value))
-     (with-syntax* ([int-name si-id]
-                    [([lhs rhs def-rhs rhs-dt full-def-rhs] ...)
+     (with-syntax* ([([lhs rhs def-rhs rhs-dt full-def-rhs] ...)
                      (for/list ([(lhs rhs*rhs-dt) (in-hash members)])
                        (match-define (vector rhs rhs-dt) rhs*rhs-dt)
                        (define def-rhs
@@ -133,9 +132,9 @@
                         def-rhs
                         rhs-dt
                         (if rhs-dt
-                            #'(remix:#%brackets rhs-dt def-rhs)
+                            #`(remix:#%brackets #,rhs-dt #,def-rhs)
                             def-rhs)))]
-                    [(extension ...) (reverse (unbox extensions-b))])
+                    [((extension ...) ...) (reverse (unbox extensions-b))])
        (syntax/loc stx
          (remix:def
           (remix:#%brackets remix:stx int-name)
@@ -250,7 +249,7 @@
                                          [(_ . blah)
                                           (syntax/loc stx
                                             (real-i . blah))])))))))]))]
-             extension ...)))))]))
+             extension ... ...)))))]))
 
 (provide static-interface
          static-interface-member
