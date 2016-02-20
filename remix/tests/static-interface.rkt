@@ -10,18 +10,22 @@
 ;; with particular functions.
 (def (example-f x y) x)
 (def (example-g x y) y)
-(def [static-interface example^]  
-  [f example-f]
-  [g example-g])
+(def [static-interface example^]
+  (def [static-interface-member f]
+    example-f)
+  (def [static-interface-member g]
+    example-g))
 (module+ test
   {(example^.f 1 2) ≡ 1}
   {(example^.g 1 2) ≡ 2})
 
 ;; These static interfaces allow nesting
 (def example2-h 19)
-(def [static-interface example2^]  
-  [fg example^]
-  [h example2-h])
+(def [static-interface example2^]
+  (def [static-interface-member fg]
+    example^)
+  (def [static-interface-member h]
+    example2-h))
 (module+ test
   {(example2^.fg.f 1 2) ≡ 1}
   {(example2^.fg.g 1 2) ≡ 2}
@@ -51,9 +55,10 @@
 ;; use the keyword #:is and specify another def transformer for
 ;; contexts where the value is in tail position.
 (def [static-interface example3^]
-  ;; NB Perhaps it would be more punny to us [def id]?
-  [fg example2-fg #:is example^]
-  [h example2-h])
+  (def [static-interface-member fg]
+    [example^ example2-fg])
+  (def [static-interface-member h]
+    example2-h))
 (def example2-fg 1)
 (module+ test
   {(example3^.fg.f 2) ≡ 1}
@@ -70,8 +75,10 @@
 (def example4-kw-key '#:key)
 (def example4-key 'key)
 (def [static-interface example4^]
-  [#:key example4-kw-key]
-  [key example4-key])
+  (def [static-interface-member #:key]
+    example4-kw-key)
+  (def [static-interface-member key]
+    example4-key))
 (module+ test
   {example4^.#:key ≡ '#:key}
   {example4^.key ≡ 'key})
