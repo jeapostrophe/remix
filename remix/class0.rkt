@@ -54,12 +54,14 @@
                           (remix:#%dot vt v))
                ...
                (remix:def (remix:#%brackets static-interface int)
-                          (remix:#%brackets v obj-v)
+                          (remix:def (remix:#%brackets static-interface-member v)
+                                       obj-v)
                           ...
-                          #:extensions
-                          #:methods gen:interface
-                          [(define (interface-vtable _) #'int-vtable)
-                           (define (interface-vtable-id _) #'int-vtable-id)]))))]))]))
+                          (remix:def
+                           (remix:#%brackets static-interface-extension)             
+                           #:methods gen:interface
+                           [(define (interface-vtable _) #'int-vtable)
+                            (define (interface-vtable-id _) #'int-vtable-id)])))))]))]))
 
 (begin-for-syntax
   (define-generics class)
@@ -128,19 +130,22 @@
                 (syntax/loc stx
                   (cls-alloc* (remix:#%app (remix:#%dot rep #:alloc) . args)))]))
            (remix:def (remix:#%brackets static-interface cls-Current)
-                      (remix:#%brackets #:alloc cls-alloc))
+                      (remix:def (remix:#%brackets static-interface-member #:alloc)
+                                 cls-alloc))
            (splicing-syntax-parameterize
                ([Current (make-rename-transformer #'cls-Current)])
              cls-new-def
              cls-int-impl-def ...
              (remix:def (remix:#%brackets static-interface cls-this))
              (remix:def (remix:#%brackets static-interface cls)
-                        (remix:#%brackets #:new cls-new)
-                        (remix:#%brackets int cls-int-impl)
+                        (remix:def (remix:#%brackets static-interface-member #:new)
+                                   cls-new)
+                        (remix:def (remix:#%brackets static-interface-member int)
+                                   cls-int-impl)
                         ...
-                        #:extensions
-                        #:methods gen:class
-                        []))
+                        (remix:def (remix:#%brackets static-interface-extension)
+                                   #:methods gen:class
+                                   [])))
            (define cls-vtables
              (make-immutable-hasheq
               (list (cons int-vtable cls-int-impl)
