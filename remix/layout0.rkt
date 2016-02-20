@@ -111,8 +111,8 @@
                            (match-define (vector the-name-f the-dt the-f-idx) v)
                            (list the-f the-name-f
                                  (if the-dt
-                                     (list the-name-f '#:is the-dt)
-                                     (list the-name-f))
+                                     #`(remix:#%brackets #,the-dt #,the-name-f)
+                                     the-name-f)
                                  the-f-idx))]
                         [stx-the-planner-id the-planner-id]
                         [stx-f->acc f->acc]
@@ -124,8 +124,12 @@
                              (list #'vector
                                    #'unsafe-vector*-ref
                                    #'unsafe-vector*-set!
-                                   #'((remix:#%brackets #:set! name-set!)
-                                      (remix:#%brackets #:! name-set!)))
+                                   #'((remix:def
+                                       (remix:#%brackets static-interface-member #:set!)
+                                       name-set!)
+                                      (remix:def
+                                       (remix:#%brackets static-interface-member #:!)
+                                       name-set!)))
                              (list #'vector-immutable
                                    #'unsafe-vector*-ref
                                    #'void
@@ -225,18 +229,22 @@
                  ...)
                (remix:def
                 (remix:#%brackets static-interface name)
-                (remix:#%brackets #:alloc name-alloc)
-                (remix:#%brackets #:set name-set)
-                (remix:#%brackets #:= name-set)
+                (remix:def (remix:#%brackets static-interface-member #:alloc)
+                           name-alloc)
+                (remix:def (remix:#%brackets static-interface-member #:set)
+                           name-set)
+                (remix:def (remix:#%brackets static-interface-member #:=)
+                           name-set)
                 mutation-interface ...
-                (remix:#%brackets all-f . all-f-si-rhs)
+                (remix:def (remix:#%brackets static-interface-member all-f)
+                           all-f-si-rhs)
                 ...
-                #:extensions
-                #:methods gen:layout
-                [(define (layout-planner-id _)
-                   #'stx-the-planner-id)
-                 (define (layout-field->acc _)
-                   f->acc)]))))]))]))
+                (remix:def (remix:#%brackets static-interface-extension)
+                           #:methods gen:layout
+                           [(define (layout-planner-id _)
+                              #'stx-the-planner-id)
+                            (define (layout-field->acc _)
+                              f->acc)])))))]))]))
 
 (provide (rename-out [phase0:layout layout])
          (for-syntax gen:layout
