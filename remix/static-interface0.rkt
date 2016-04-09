@@ -20,6 +20,9 @@
          racket/performance-hint
          (prefix-in remix: remix/stx0))
 
+;; XXX Call these static-implementations and make a thing called a
+;; static-interface
+
 (begin-for-syntax
   (define-generics static-interface
     (static-interface-members static-interface))
