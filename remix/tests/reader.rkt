@@ -31,13 +31,24 @@
   (check-false (read-square-bracket-with-tag))
   (check-false (read-curly-brace-with-tag))
   (check-false (read-cdot))
+
+  (define-syntax-rule (testerrors s ...)
+    (begin
+      (let ([x s])
+        (check-exn exn:fail:read?
+                   (λ () (with-input-from-string x remix-read)))
+        (check-exn exn:fail:read?
+                   (λ () (with-input-from-string x remix-read-syntax))))
+      ...))
+
+  (testerrors
+   "x.")
   
   (testit*
    ["(1 2 3)" (1 2 3)]
    ["[1 2 3]" (#%brackets 1 2 3)]
    ["{1 2 3}" (#%braces 1 2 3)]
    ["|a.b|" a.b]
-   ["x." (#%dot x)]
    ["a.b" (#%dot a b)]
    ["a .b" (#%dot a b)]
    ["a. b" (#%dot a b)]
