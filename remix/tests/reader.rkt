@@ -37,6 +37,7 @@
    ["[1 2 3]" (#%brackets 1 2 3)]
    ["{1 2 3}" (#%braces 1 2 3)]
    ["|a.b|" a.b]
+   ["x." (#%dot x)]
    ["a.b" (#%dot a b)]
    ["a .b" (#%dot a b)]
    ["a. b" (#%dot a b)]
