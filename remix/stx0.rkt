@@ -203,13 +203,12 @@
 (define-syntax (#%dot stx)
   (syntax-parse stx
     #:literals (#%dot)
-    [(_ dt . (~and x+y (x ... (#%dot . y))))
-     #:declare dt (static dot-transformer? "dot transformer")
+    [(_ (#%dot dt x) . y)
+     ;; flatten it so that the dot transformer within dt sees both x and y
      (quasisyntax/loc stx
-       (#%dot dt
-              #,@(syntax/loc #'x+y
-                   (x ... . y))))]
-    [(_ dt . (~not (x ... (#%dot . _) . _)))
+       (#%dot dt x . y))]
+    [(_ dt . _)
+     ;; dt is an identifier with a syntax binding to a dot transformer
      #:declare dt (static dot-transformer? "dot transformer")
      (dot-transform (attribute dt.value) stx)]))
 
@@ -222,10 +221,12 @@
 (define-syntax (remix-#%app stx)
   (syntax-parse stx
     #:literals (#%dot)
-    [(_ (#%dot x ... (#%dot . y)) . body)
+    [(_ (#%dot (#%dot dt x) . y) . body)
+     ;; flatten it so that the dot or app-dot transformer within dt sees both x and y
      (syntax/loc stx
-       (remix-#%app (#%dot x ... . y) . body))]
-    [(_ (#%dot adt . (~not (x ... (#%dot . _) . _))) . body)
+       (remix-#%app (#%dot dt x . y) . body))]
+    [(_ (#%dot adt . _) . body)
+     ;; adt is an identifier with a syntax binding to an app-dot transformer
      #:declare adt (static app-dot-transformer? "app-dot transformer")
      (app-dot-transform (attribute adt.value) stx)]
     [(_ . body)
