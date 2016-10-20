@@ -1,5 +1,29 @@
+TODO remove ;
+
 TODO add ; back into braces but don't have , because of conflict with
 its ,
+
+TODO look at udelim
+
+TODO look at Unicode Bidi_Paired_Bracket_Type property values of Open
+＆ Close: http://xahlee.info/comp/unicode_matching_brackets.html
+
+TODO require uses the #%required binding from the module to let the
+server do something to the client namespace --- This could be used to
+propagate static bindings for things like type-classes outward
+
+TODO require* like def* to put have extensible #%module-begin (called #%require*d)
+
+TODO require* at the top-interaction hacks it
+
+TODO implement match def-transformer and see how it looks
+
+TOOD look into Greg's request
+https://mail.google.com/mail/u/0/#inbox/1574317e1974dbf5
+
+(def id              42
+     (list a b c)    (list 1 2 3)
+     (values in out) (tcp-connect "host" 3000))
 
 TODO think about interface language part of theory/interface/modules
 
@@ -82,7 +106,7 @@ TODO "define"-transformers for attaching meta-information to definitions, like d
 
 TODO Bindings & keywords everywhere
 
-TODO Less representation contraints
+TODO Less representation constraints
 
 TODO Meaningless eq? semantics
 

@@ -23,7 +23,7 @@
   ;; You will get an allocation function named #:alloc
   (def [posn p1] (posn.#:alloc [x 5] [y 7]))
   ;; XXX (def [posn p1] #:alloc [x 5] [y 7]) <--- def transformer for allocation
-  ;; XXX (def [posn p1] (posn [x 5] [y 7])) <--- default use is allocation
+  ;; XXX (def [posn p1] [x 5] [y 7]) <--- default use is allocation
   ;; And accessors
   {p1.x ≡ 5}
   {p1.y ≡ 7}
@@ -33,7 +33,7 @@
   {(posn.x p1) ≡ 5}
   ;; You will also get a copying function
   (def [posn p2] (p1.#:set [y {p1.y + 2}]))
-  ;; XXX (def [posn p2] (posn p1 [y {p1.y + 2}])) <---- default use with expr is copy
+  ;; XXX (def [posn p2] p1 [y {p1.y + 2}]) <---- default use with expr is copy
   ;; Notice that these built-in functions are keywords, so that they
   ;; can't conflict with the fields you've defined.
   {p2.x ≡ 5}
