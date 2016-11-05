@@ -6,6 +6,7 @@
                      racket/syntax
                      syntax/parse)
          remix/semi
+         remix/module
          syntax/quote
          syntax/parse/define
          remix/stx/singleton-struct0
@@ -426,6 +427,8 @@
          module
          module*
          module+
+         define-module+
+         define-module*+
          lang
          lang*
          for-syntax
