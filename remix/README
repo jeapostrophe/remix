@@ -3,51 +3,20 @@ TODO remove ;
 TODO add ; back into braces but don't have , because of conflict with
 its ,
 
-TODO look at udelim
-
-TODO look at Unicode Bidi_Paired_Bracket_Type property values of Open
-＆ Close: http://xahlee.info/comp/unicode_matching_brackets.html
-
 TODO require uses the #%required binding from the module to let the
 server do something to the client namespace --- This could be used to
 propagate static bindings for things like type-classes outward
 
 TODO require* like def* to put have extensible #%module-begin (called #%require*d)
 
-TODO require* at the top-interaction hacks it
-
 TODO implement match def-transformer and see how it looks
-
-TOOD look into Greg's request
-https://mail.google.com/mail/u/0/#inbox/1574317e1974dbf5
-
-(def id              42
-     (list a b c)    (list 1 2 3)
-     (values in out) (tcp-connect "host" 3000))
 
 TODO think about interface language part of theory/interface/modules
 
 TODO add syntax property for def transformer on RHS (for function call
 results, alloc, etc)
 
-(define (from-origin x) : posn
-  (posn x x))
-
-(from-orign 5).x
-
-(begin a (from-origin 5)).x
-
 TODO #%dot app syntax differently
-
-obj.(move 5 6)
-
-TODO robby's request
-
-(haskell-style
- (f '()) = 0
- (f (cons x l)) = {1+ (f l)})
-
-TODO (define+ (f case) body)
 
 TODO facts/properties macro
 
@@ -61,28 +30,6 @@ TODO No effects or expressions at top-level (controversial, mf says wrong) [set-
 
 TODO "Versioned" libraries
 
-TODO Make macros less weird and more like programs, by...
-
-TODO Unified matching (syntax-parse/match/etc)
-
-TODO Unified templates (syntax, quasiquote, etc)
-
-  If x is a list, then...
-
-  (template (list (~seq 1 ,x) ...))
-  =>
-  (append-map (lambda (x) (list 1 x)) x)
-
-  (template (syntax a ,x ... c))
-  =>
-  (syntax-cons a (syntax-append x (syntax c)))
-
-  (template (+ (f ,x) ...))
-  =>
-  (apply + (map f x))
-
-TODO Pattern matching everywhere
-
 TODO New structs (more reflective information, representation control, sealing)
 
 TODO Implicit units and interfaces (with properties)
@@ -90,19 +37,11 @@ TODO Implicit units and interfaces (with properties)
 TODO Generics everywhere
 https://github.com/stamourv/generic-collections
 
-TODO bindings to cooperate with {}
-
-array.[{1 + 1}].(foo)
-->
-(#%dot array (#%brackets (+ 1 1)) (foo))
-
 (define (foo (var x) (~opt y 17) (posn p))
  {x := z + 13}
  {p.x + p.y})
 
 TODO Immutable strings only
-
-TODO "define"-transformers for attaching meta-information to definitions, like documentation, tests, contracts, types, etc
 
 TODO Bindings & keywords everywhere
 
@@ -110,25 +49,9 @@ TODO Less representation constraints
 
 TODO Meaningless eq? semantics
 
-TODO Literate programming and inline docs easily
-
-TODO Optional traditional numbers (num/generic => +)
-
-TODO Optional non-coercing number tower (num/{fl,fx,i32,i64,f32,f64,nat,int,rational,real})
----- TODO with maybe impl (num/*/maybe)
----- TODO with overflow errors impl (num/*/exn)
----- TODO with modulo-X impl (num/*/modulo)
----- TODO with modulo-X & carry impl (num/*/carry)
-
 TODO More unicode!
 
 TODO Unboxed, raw data
-
-TODO Remove multiple values?
-
-TODO Rocket-strength super cut:
-
-  λ.(+ $.0 $.1)
 
 TODO Don't use English in exceptions and have more structured exns
 [demo on raco/pkg]
@@ -142,38 +65,9 @@ TODO zos don't appear to users (switch to interp if no write access)
 
 TODO only use syntax-parse and define-simple-macro
 
-TODO add a threading macro
-
-TODO types and other information in syntax-local-value
-
-TODO support :keyword (and keyword:?)
-
 TODO @literate
 
 TODO @docs
-
-TODO Meta def & def* trans for more expansion (docs and test), static
-info (types), and def transformers (types), maybe syntax ---
-transformer (can change define to define-syntax/etc) vs expander
-(expands to a different syntax) --- no ability to add args to
-functions!
---- See https://mail.google.com/mail/u/0/#inbox/1513f480b3313fb2
-
-;; def+'s default is to use match (while def/def*'s default is to not
-;; use match)
-
-(def+ (length '())
-  0)
-(def+ (length (cons x xs))
-  {(length xs) + 1})
-(def+ [contract length] (-> list? nat?))
-(def+ [doc (length l)]
-  @{A most excellent function
-    for discovering the length of lists.})
-(def+ [examples length]
- {(length '()) \defs 0}
- {(length '(a b c)) \defs 3})
-(def+ [provide length])
 
 TODO how to make sure cases of cond/etc are complete?
 
@@ -185,13 +79,3 @@ too much knowledge on the data structure than is Rackety.
 
 TODO operator overloading definitions of + and ones that check the
 types for float/int/fixnum/etc
-
-TODO greg's defs
-https://github.com/greghendershott/defn
-https://github.com/greghendershott/def-jambda
-
-TODO fun def transformer
-
-TODO mac def+ transformer (syntax-parser)
-
-TODO parameterize def* transformer
