@@ -3,6 +3,11 @@
 (define collection 'multi)
 (define deps '("base"
                "at-exp-lib"
-               "rackunit-lib"))
+               "rackunit-lib"
+               "datalog"))
 (define build-deps '("rackunit-lib"
-                     "base" "racket-doc" "scribble-lib"))
+                     "base"
+                     "racket-doc"
+                     "scribble-lib"
+                     "typed-racket-lib"
+                     "unstable-lib"))
