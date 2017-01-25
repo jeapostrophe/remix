@@ -22,7 +22,7 @@
     (begin (testit . t) ...))
   (define-syntax-rule (testit str d)
     (testit-f str 'd #'d))
-  
+
   (define (testit-f str qd stx)
     (check-equal? (with-input-from-string str remix-read) qd)
     (when STX?
@@ -31,6 +31,29 @@
   (check-false (read-square-bracket-with-tag))
   (check-false (read-curly-brace-with-tag))
   (check-false (read-cdot))
+
+  (define-syntax-rule (test-only-with-tag* t ...)
+    (begin (test-only-with-tag . t) ...))
+  (define-syntax-rule (test-only-with-tag str d)
+    (check-equal?
+     (with-input-from-string str
+       (λ ()
+         (parameterize ([read-square-bracket-with-tag #t]
+                        [read-curly-brace-with-tag #t])
+           (read))))
+     d))
+  (test-only-with-tag*
+   ["#(1 2)" (vector 1 2)]
+   ["#[1 2]" (vector 1 2)]
+   ["#{1 2}" (vector 1 2)]
+
+   ["#hash((1 . 2))" (hash 1 2)]
+   ["#hash[(1 . 2)]" (hash 1 2)]
+   ["#hash[[1 . 2]]" (hash 1 2)]
+   ["#hash([1 . 2])" (hash 1 2)]
+   ["#hash{(1 . 2)}" (hash 1 2)]
+   ["#hash{{1 . 2}}" (hash 1 2)]
+   ["#hash({1 . 2})" (hash 1 2)])
 
   (define-syntax-rule (testerrors s ...)
     (begin
@@ -43,7 +66,7 @@
 
   (testerrors
    "x.")
-  
+
   (testit*
    ["(1 2 3)" (1 2 3)]
    ["[1 2 3]" (#%brackets 1 2 3)]
@@ -65,4 +88,6 @@
    ["(a b).[3]" (#%dot (a b) (#%brackets 3))]
    ["({1})" ((#%braces 1))]
    ["remix/stx.0" (#%dot remix/stx 0)]
-   ["(require remix/stx.0)" (require (#%dot remix/stx 0))]))
+   ["(require remix/stx.0)" (require (#%dot remix/stx 0))]
+
+   ))
