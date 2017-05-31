@@ -8,7 +8,20 @@
      (syntax/loc stx
        (#%module-begin s ...))]))
 
+(define-syntax (remix-require stx)
+  (syntax-parse stx
+    [(_ m)
+     (syntax/loc stx
+       (begin (require (rename-in m
+                                  [#%required internal-#%required]))
+              (internal-#%required m)))]
+    [(_ m ...)
+     (syntax/loc stx
+       (begin (remix-require m)
+              ...))]))
+
 (provide (rename-out
-          [remix-module-begin #%module-begin])
-         unquote
-         require)
+          [remix-module-begin #%module-begin]
+          [remix-require require]
+          ;; xxx make
+          #;[remix-require* require*]))

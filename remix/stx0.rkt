@@ -403,7 +403,7 @@
                      [remix-cond cond]
                      [remix-cut-$ $])
          impossible!
-         (rename-out [impossible! ☠])
+         (rename-out [impossible! ☠]) ;; \skull
          #%rest
          (rename-out [remix-block block])
          #%brackets
