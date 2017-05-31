@@ -1,56 +1,53 @@
 #lang remix
-;; Remix comments start with ;;
+;; Remix comments start with ;
 
 ;; #lang remix only contains two bindings: #%module-begin and require
 ;;
 ;; We use require to get everything else. most of it comes from stx0
-require remix/stx0
-        remix/num/gen0;
-;; A semi introduces a set of parens to its left
+(require remix/stx0
+         remix/num/gen0)
 
-;; As usual `unquote` escapes from its context, in the case of a
-;; semi-sequence, this means that the term is not wrapped.
-,(module+ test
-   ;; This introduces ≡ as a testing form
+(module+ test
+  ;; This introduces ≡ as a testing form
 
-   ;; XXX Drop this and instead have a macro for writing down
-   ;; properties that communicates with boolean forms, etc. Supports ∀,
-   ;; etc.
-   (require remix/test0))
+  ;; XXX Drop this and instead have a macro for writing down
+  ;; properties that communicates with boolean forms, etc. Supports ∀,
+  ;; etc.
+  (require remix/test0))
 
 ;; define is replaced with def
-def z 42;
-module+ test
- {z ≡ 42};
+(def z 42)
+(module+ test
+  {z ≡ 42})
 
 ;; when def has more forms than one, they are put inside of a block
-def x
- (def a 40)
- (def b 2)
- (+ a b) ;
-,(module+ test
+(def x
+  (def a 40)
+  (def b 2)
+  (+ a b))
+(module+ test
    {x ≡ 42})
 
 ;; If you would like to use ;-syntax in the inside of def, then you
 ;; need more punctuation. You have two choices.
-def x2
- [def a 40;
-  def b 2;
-  (+ a b)];
-,(module+ test
+(def x2
+ [(def a 40)
+  (def b 2)
+  (+ a b)])
+(module+ test
    {x2 ≡ 42})
 
-def x3
- [def a 40;
-  def b 2;
-  {a + b}];
-,(module+ test
-   {x3 ≡ 42})
+(def x3
+  [(def a 40)
+   (def b 2)
+   {a + b}])
+(module+ test
+  {x3 ≡ 42})
 
-def x4
- [,{a := 40}
-  def b 2 ;
-  {a + b}];
+(def x4
+  [{a := 40}
+   (def b 2)
+   {a + b}])
 (module+ test
   {x4 ≡ 42})
 

@@ -5,7 +5,6 @@
                      racket/generic
                      racket/syntax
                      syntax/parse)
-         remix/semi
          remix/module
          syntax/quote
          syntax/parse/define
@@ -37,8 +36,7 @@
        (def x (remix-λ args . body)))]))
 
 (module remix-block racket/base
-  (require remix/semi
-           (for-syntax racket/base
+  (require (for-syntax racket/base
                        racket/generic
                        syntax/parse))
   (define-syntax (def* stx)
@@ -83,9 +81,9 @@
 
   (define-syntax (remix-block stx)
     (syntax-parse stx
-      [(_ s:semi-seq)
+      [(_ s ...)
        (syntax/loc stx
-         (the-remix-block s.semi-form ... s.tail-form ...))]))
+         (the-remix-block s ...))]))
 
   (define-syntax #%brackets
     (make-rename-transformer #'remix-block))
@@ -175,14 +173,14 @@
 
 (define-syntax (block-#%braces stx)
   (syntax-parse stx
-    [(_ s:semi-seq)
-     (syntax-case #'(s.semi-form ...) ()
+    [(_ s ...)
+     (syntax-case #'(s ...) ()
        [()
         (syntax/loc stx
-          (the-#%braces s.tail-form ...))]
+          (the-#%braces s ...))]
        [(sf ...)
         (syntax/loc stx
-          (remix-block sf ... (the-#%braces s.tail-form ...)))])]))
+          (remix-block sf ... (the-#%braces s ...)))])]))
 
 (require (for-syntax (prefix-in dangerous:stxparamkey: racket/private/stxparamkey)))
 (begin-for-syntax

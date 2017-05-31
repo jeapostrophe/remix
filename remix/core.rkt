@@ -1,16 +1,14 @@
 #lang racket/base
-(require remix/semi
-         (for-syntax racket/base
+(require (for-syntax racket/base
                      syntax/parse))
 
 (define-syntax (remix-module-begin stx)
   (syntax-parse stx
-    [(_ s:semi-seq)
+    [(_ s ...)
      (syntax/loc stx
-       (#%module-begin s.semi-form ... s.tail-form ...))]))
+       (#%module-begin s ...))]))
 
 (provide (rename-out
           [remix-module-begin #%module-begin])
-         #%semi
          unquote
          require)

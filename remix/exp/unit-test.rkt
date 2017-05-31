@@ -1,13 +1,15 @@
 #lang racket/base
 
+#;
 (define-signature ^eq
   ==)
 
+#;
 (define-unit (@eq-symbol)
   (export ^eq)
   (define == symbol=?))
 
-
+#;
 (define-unit
   (@eq-pair
    [(^prefix a: ^eq) (@eq-symbol)]

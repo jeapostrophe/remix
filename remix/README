@@ -1,8 +1,3 @@
-TODO remove ;
-
-TODO add ; back into braces but don't have , because of conflict with
-its ,
-
 TODO require uses the #%required binding from the module to let the
 server do something to the client namespace --- This could be used to
 propagate static bindings for things like type-classes outward
