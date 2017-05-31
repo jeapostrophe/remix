@@ -208,11 +208,15 @@
                   (λ (cls-impl-id cls-this-id)
                     (list
                      #'int-vtable-id
-                     (with-syntax ([cls-impl cls-impl-id])
+                     (with-syntax ([cls-impl cls-impl-id]
+                                   [cls-this cls-this-id])
                        (syntax/loc stx
-                         (remix:def (remix:#%brackets model int-vtable cls-impl)
-                                    ;; XXX manipulate and bind this
-                                    . int-body)))))))
+                         (splicing-syntax-parameterize
+                             ([this
+                               (make-rename-transformer #'cls-this)])
+                           (remix:def (remix:#%brackets model int-vtable cls-impl)
+                                      ;; XXX manipulate and bind this
+                                      . int-body))))))))
      #'(void)]))
 
 (remix:def (remix:#%brackets static-interface default-Current))
