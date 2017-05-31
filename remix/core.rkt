@@ -4,9 +4,23 @@
 
 (define-syntax (remix-module-begin stx)
   (syntax-parse stx
-    [(_ s ...)
+    #:literals (remix-require*)
+    [(_ (~and s (~not (remix-require* . _))) ...)
      (syntax/loc stx
-       (#%module-begin s ...))]))
+       (#%module-begin s ...))]
+    [(_ (~and pre (~not (remix-require* . _))) ...
+        (remix-require* m)
+        post ...)
+     (syntax/loc stx
+       (#%module-begin pre ... (do-remix-require* m post ...)))]))
+
+(define-syntax (do-remix-require* stx)
+  (syntax-parse stx
+    [(_ m . body)
+     (syntax/loc stx
+       (begin (require (rename-in (only-in m #%require*d)
+                                  [#%require*d internal-#%require*d]))
+              (internal-#%require*d . body)))]))
 
 (define-syntax (remix-require stx)
   (syntax-parse stx
@@ -20,8 +34,10 @@
        (begin (remix-require m)
               ...))]))
 
+(define-syntax (remix-require* stx)
+  (raise-syntax-error 'require* "illegal outside of top-level" stx))
+
 (provide (rename-out
           [remix-module-begin #%module-begin]
           [remix-require require]
-          ;; xxx make
-          #;[remix-require* require*]))
+          [remix-require* require*]))
