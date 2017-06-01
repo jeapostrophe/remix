@@ -30,7 +30,9 @@
                         ;; xxx this is stupid, but I don't know how not to do it
                         (raise-syntax-error 'default-in "default must be imported"
                                             stx def))])
-                  (resolve-module-path-index source-mod)))
+                  (match (resolve-module-path-index source-mod)
+                    ['#%kernel ''#%kernel]
+                    [x x])))
               (define id (syntax->datum id-stx))
               (cond
                 [(set-member? ids id)
@@ -59,7 +61,6 @@
              #;
              [snozle moogle]
 
-             ;; xxx Doesn't work because '#%kernel isn't valid for make-import
-             #;[nozzle void]
-             ))
-  (snoozle 42))
+             [nozzle void]))
+  (snoozle 42)
+  (nozzle 1 2 3 4))
