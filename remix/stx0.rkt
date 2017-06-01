@@ -422,6 +422,7 @@
                      [... ***]) 
          #%datum
          quote
+         unquote
          module
          module*
          module+

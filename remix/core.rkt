@@ -1,6 +1,9 @@
 #lang racket/base
 (require (for-syntax racket/base
-                     syntax/parse))
+                     syntax/parse)
+         racket/default-in)
+
+;; xxx remove need for local-require/local-require* by detecting setting
 
 (define-syntax (remix-module-begin stx)
   (syntax-parse stx
@@ -18,7 +21,9 @@
   (syntax-parse stx
     [(_ m . body)
      (syntax/loc stx
-       (begin (require (rename-in (only-in m #%require*d)
+       (begin (require (rename-in (only-in (default-in m
+                                             [#%require*d xxx-stupid-void])
+                                           #%require*d)
                                   [#%require*d internal-#%require*d]))
               (internal-#%require*d . body)))]))
 
@@ -26,7 +31,8 @@
   (syntax-parse stx
     [(_ m)
      (syntax/loc stx
-       (begin (require (rename-in m
+       (begin (require (rename-in (default-in m
+                                    [#%required xxx-stupid-void])
                                   [#%required internal-#%required]))
               (internal-#%required m)))]
     [(_ m ...)
