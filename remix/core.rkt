@@ -1,9 +1,10 @@
 #lang racket/base
 (require (for-syntax racket/base
                      syntax/parse)
+         remix/required-helper
          racket/default-in)
 
-;; xxx remove need for local-require/local-require* by detecting setting
+;; xxx remove need for local-require/local-require* by detecting context?
 
 (define-syntax (remix-module-begin stx)
   (syntax-parse stx
@@ -21,9 +22,8 @@
   (syntax-parse stx
     [(_ m . body)
      (syntax/loc stx
-       (begin (require (rename-in (only-in (default-in m
-                                             [#%require*d xxx-stupid-void])
-                                           #%require*d)
+       (begin (require (rename-in (default-in m
+                                    [#%required default-#%required])
                                   [#%require*d internal-#%require*d]))
               (internal-#%require*d . body)))]))
 
@@ -32,13 +32,12 @@
     [(_ m)
      (syntax/loc stx
        (begin (require (rename-in (default-in m
-                                    [#%required xxx-stupid-void])
+                                    [#%required default-#%required])
                                   [#%required internal-#%required]))
               (internal-#%required m)))]
     [(_ m ...)
      (syntax/loc stx
-       (begin (remix-require m)
-              ...))]))
+       (begin (remix-require m) ...))]))
 
 (define-syntax (remix-require* stx)
   (raise-syntax-error 'require* "illegal outside of top-level" stx))
