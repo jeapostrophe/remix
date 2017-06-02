@@ -22,8 +22,10 @@
   (syntax-parse stx
     [(_ m . body)
      (syntax/loc stx
+       ;; xxx maybe don't use default to require #%required* to be
+       ;; there
        (begin (require (rename-in (default-in m
-                                    [#%required default-#%required])
+                                    [#%require*d default-#%required])
                                   [#%require*d internal-#%require*d]))
               (internal-#%require*d . body)))]))
 
@@ -31,6 +33,10 @@
   (syntax-parse stx
     [(_ m)
      (syntax/loc stx
+       ;; xxx maybe make to simplify
+       #;(use-if-in m
+                    #%required
+                    (#%required m))
        (begin (require (rename-in (default-in m
                                     [#%required default-#%required])
                                   [#%required internal-#%required]))
