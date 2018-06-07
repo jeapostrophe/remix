@@ -50,8 +50,9 @@
   (define (get-location)
     (values line col pos))
 
-  (make-input-port name read-in #f void #f #f
-                   get-location void #f #f))
+  (parameterize ([port-count-lines-enabled #t])
+    (make-input-port name read-in #f void #f #f
+                     get-location void #f #f)))
 
 (provide
  (contract-out
