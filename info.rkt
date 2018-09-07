@@ -1,6 +1,6 @@
 #lang info
 (define version "0.0")
-(define collection 'multi)
+(define collection "remix")
 (define deps '("base"
                "at-exp-lib"
                "rackunit-lib"
