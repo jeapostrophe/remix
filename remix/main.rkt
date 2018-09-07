@@ -1,3 +1,5 @@
+#lang racket/base
+
 (module reader syntax/module-reader
   remix/core
   #:read at:read
