@@ -476,4 +476,4 @@
          stx
          mac)
 
-(provide + * < /)
+(provide + * < / - bitwise-and)
