@@ -22,21 +22,13 @@
   (syntax-parse stx
     [(_ m . body)
      (syntax/loc stx
-       ;; xxx maybe don't use default to require #%required* to be
-       ;; there
-       (begin (require (rename-in (default-in m
-                                    [#%require*d default-#%required])
-                                  [#%require*d internal-#%require*d]))
+       (begin (require (rename-in m [#%require*d internal-#%require*d]))
               (internal-#%require*d . body)))]))
 
 (define-syntax (remix-require stx)
   (syntax-parse stx
     [(_ m)
      (syntax/loc stx
-       ;; xxx maybe make to simplify
-       #;(use-if-in m
-                    #%required
-                    (#%required m))
        (begin (require (rename-in (default-in m
                                     [#%required default-#%required])
                                   [#%required internal-#%required]))
