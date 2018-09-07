@@ -1,9 +1,8 @@
 #lang remix
-(require remix/stx0
-         remix/theory0
-         remix/num/gen0)
+(require remix/stx
+         remix/theory)
 (module+ test
-   (require remix/test0))
+   (require remix/test))
 
 ;; A theory is a specification of some values
 (def [theory Monoid]

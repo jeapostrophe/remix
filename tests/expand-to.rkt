@@ -1,6 +1,5 @@
 #lang remix
-(require remix/stx0
-         remix/num/gen0
+(require remix/stx
          "expand-from.rkt")
 
 (def [posn p1] (posn.#:alloc [x 5] [y 7]))

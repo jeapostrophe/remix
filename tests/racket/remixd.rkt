@@ -1,7 +1,7 @@
 #lang at-exp racket/base
 
 ;; Some remix macros just work:
-(require remix/datalog0)
+(require remix/datalog)
 
 (define graph (make-theory))
 @datalog[graph]{
@@ -12,7 +12,7 @@
 }
 
 ;; But others from remix/stx are specially exposed
-(require racket/remixd)
+(require remix/racket)
 
 @lang[typed]{
 #lang typed/racket

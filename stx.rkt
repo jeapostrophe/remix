@@ -8,7 +8,7 @@
          remix/module
          syntax/quote
          syntax/parse/define
-         remix/stx/singleton-struct0
+         remix/stx/singleton-struct
          racket/stxparam)
 
 (begin-for-syntax
@@ -363,7 +363,7 @@
                         #,(syntax/loc #'more (remix-cond . more)))))]))
 
 (begin-for-syntax
-  (require remix/stx/raw0)
+  (require remix/stx/raw)
   (define (do-lang caller-id module-stx stx)
     (syntax-case stx ()
       [(_ module-name s ...)
@@ -475,3 +475,5 @@
 (provide val
          stx
          mac)
+
+(provide + * < /)

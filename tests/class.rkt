@@ -1,10 +1,9 @@
 #lang remix
-(require remix/stx0
-         remix/class0
-         remix/num/gen0
+(require remix/stx
+         remix/class
          "layout.rkt")
 (module+ test
-  (require remix/test0))
+  (require remix/test))
 
 (def [interface 2d<%>]
   translate

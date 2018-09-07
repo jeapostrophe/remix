@@ -33,8 +33,8 @@
 
 (require (for-syntax racket/base
                      syntax/parse)
-         remix/required-helper
-         racket/default-in)
+         remix/private/required-helper
+         remix/default-in)
 
 ;; xxx remove need for local-require/local-require* by detecting context?
 

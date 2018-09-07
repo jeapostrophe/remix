@@ -7,18 +7,18 @@
                      racket/format
                      racket/list
                      racket/match
-                     (prefix-in remix: remix/stx0)
-                     remix/stx/singleton-struct0
+                     (prefix-in remix: remix/stx)
+                     remix/stx/singleton-struct
                      (for-syntax racket/base
                                  racket/syntax
                                  syntax/parse
                                  racket/generic
-                                 (prefix-in remix: remix/stx0)))
+                                 (prefix-in remix: remix/stx)))
          racket/stxparam
          racket/unsafe/ops
          racket/performance-hint
-         (prefix-in remix: remix/stx0)
-         remix/layout0)
+         (prefix-in remix: remix/stx)
+         remix/layout)
 
 (define-syntax theory
   (singleton-struct

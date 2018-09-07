@@ -1,6 +1,6 @@
 #lang remix
-(require remix/stx0
-         remix/layout0)
+(require remix/stx
+         remix/layout)
 (def [layout posn]
   x y)
 (provide posn)

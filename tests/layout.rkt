@@ -1,10 +1,9 @@
 #lang remix
-(require remix/stx0
-         remix/layout0
-         remix/num/gen0
+(require remix/stx
+         remix/layout
          "static-interface.rkt")
 (module+ test
-  (require remix/test0))
+  (require remix/test))
 
 ;; A layout is a container with no sealing or representation
 ;; guarantees. This means you can't necessarily protect the contents

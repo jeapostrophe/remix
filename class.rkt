@@ -6,13 +6,13 @@
                      racket/match
                      racket/dict
                      syntax/id-table
-                     remix/stx/singleton-struct0
-                     (prefix-in remix: remix/stx0))
+                     remix/stx/singleton-struct
+                     (prefix-in remix: remix/stx))
          racket/stxparam
          racket/splicing
-         remix/theory0
-         remix/static-interface0
-         (prefix-in remix: remix/stx0))
+         remix/theory
+         remix/static-interface
+         (prefix-in remix: remix/stx))
 
 (struct object (interface->implementation rep))
 

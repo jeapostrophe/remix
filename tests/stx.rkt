@@ -3,9 +3,8 @@
 
 ;; #lang remix only contains two bindings: #%module-begin and require
 ;;
-;; We use require to get everything else. most of it comes from stx0
-(require remix/stx0
-         remix/num/gen0)
+;; We use require to get everything else. most of it comes from stx
+(require remix/stx)
 
 (module+ test
   ;; This introduces ≡ as a testing form
@@ -13,7 +12,7 @@
   ;; XXX Drop this and instead have a macro for writing down
   ;; properties that communicates with boolean forms, etc. Supports ∀,
   ;; etc.
-  (require remix/test0))
+  (require remix/test))
 
 ;; define is replaced with def
 (def z 42)
@@ -108,7 +107,7 @@
 ;; accurate source location information for the original file. datalog
 ;; uses this to make all the source locations correct, so errors in
 ;; datalog will give accurate source locations.
-(require remix/datalog0)
+(require remix/datalog)
 (def graph (make-theory))
 @datalog[graph]{
  edge(a, b). edge(b, c). edge(c, d). edge(d, a).
@@ -254,7 +253,7 @@
   {v99 ≡ 99})
 
 ;; stx is define-syntax
-(require (for-syntax remix/stx0))
+(require (for-syntax remix/stx))
 (def [stx stx42] 42)
 
 ;; mac is define-simple-macro

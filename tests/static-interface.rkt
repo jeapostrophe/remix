@@ -1,10 +1,9 @@
 #lang remix
-(require remix/stx0
-         remix/static-interface0
-         remix/num/gen0
-         (for-syntax remix/stx0))
+(require remix/stx
+         remix/static-interface
+         (for-syntax remix/stx))
 (module+ test
-   (require remix/test0))
+   (require remix/test))
 
 ;; First, we can define static interfaces, which associate dot-terms
 ;; with particular functions.
