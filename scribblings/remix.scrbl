@@ -43,7 +43,7 @@ compatibility.}
 
 ]
 
-@section{Basic Remix}
+@section{Core Remix}
 
 @defmodule[remix #:lang]
 
@@ -95,3 +95,49 @@ m) (#%require*d after ...))] where @racket[#%require*d] is provided by
 
 This allows gives the required module control over the expansion of
 the remainder of the requiring module.}
+
+@section[#:tag "stdlibmores"]{Standard Library Mores}
+
+A @rmx module @racket[_m] should contain submodules for each version
+of its interface. For example, if @racket[remix/list] had two
+versions, then it would have a @racket[(submod remix/list 0)] and
+@racket[(submod remix/list 1)] submodule, in addition to providing
+the most recent interface as @racket[remix/list]. In most cases,
+these submodules will simply provide slightly different symbols, but
+occasionally may implement different behavior. This allows clients to
+bind to specific past versions to maintain compatibility (forwards or
+backwards.)
+
+In most cases, @rmx modules implement this pattern with
+@racket[provide/versions]@margin-note{TODO Actually implement this
+macro.}. The @rmx documentation notates which version identifiers
+appear in, but does not explicitly document the
+submodules.@margin-note{TODO Is that a good idea? Maybe just make
+@racket[provide/versions] generate a documentation blob to import.}
+
+@section{Basic Remix}
+
+@defmodule[remix/base]
+
+Exports the bindings defined elsewhere in this manual, unless
+otherwise noted. In accordance with the @secref["stdlibmores"], also
+provides submodules such that @racket[(submod remix/base _n)] provides
+all modules at a version closest to but not greater than
+@racket[_n]. (For example, @racket[(submod remix/base 3)] would
+provide @racket[(submod remix/list 2)] if @racket[remix/list] did not
+have a version @racket[3].) In some cases, other modules are listed as
+starting at a version other than @racket[1] to signify that they
+should not appear in earlier versions of
+@racket[remix/base].@margin-note{TODO Make a macro to make this easy
+to do.}
+
+@racketmodname[remix/base]
+
+@section{Syntactic Forms}
+
+@defmodule[remix/stx]
+
+The core syntax of @rmx is provided in this module.
+
+XXX
+

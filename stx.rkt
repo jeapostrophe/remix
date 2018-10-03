@@ -431,6 +431,7 @@
          lang
          lang*
          for-syntax
+         submod
          provide)
 
 (define-syntax val
@@ -476,4 +477,4 @@
          stx
          mac)
 
-(provide + * < / - bitwise-and)
+

@@ -1,5 +1,5 @@
 #lang remix
-(require remix/stx
+(require remix/base
          remix/theory)
 (module+ test
    (require remix/test))

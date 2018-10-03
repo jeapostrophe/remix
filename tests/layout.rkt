@@ -1,5 +1,5 @@
 #lang remix
-(require remix/stx
+(require remix/base
          remix/layout
          "static-interface.rkt")
 (module+ test

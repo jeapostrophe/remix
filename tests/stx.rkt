@@ -4,7 +4,7 @@
 ;; #lang remix only contains two bindings: #%module-begin and require
 ;;
 ;; We use require to get everything else. most of it comes from stx
-(require remix/stx)
+(require remix/base)
 
 (module+ test
   ;; This introduces ≡ as a testing form
