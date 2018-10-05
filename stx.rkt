@@ -207,6 +207,8 @@
          ;; () or [] to mean eval?
          (dot-ref #,obj `#,b)))]))
 
+;; XXX default implementation for hash tables, vectors, classes, etc;
+;; maybe even structs
 (define-generics dynamic-dot-map
   (dot-ref dynamic-dot-map key))
 

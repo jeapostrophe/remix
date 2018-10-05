@@ -162,6 +162,9 @@ XXX dot-transform?
 XXX dot-ref
 XXX #%dot
 
+XXX gen:dynamic-dot-map
+XXX dynamic-dot-map?
+
 XXX gen:app-dot-transformer
 XXX app-dot-transformer?
 XXX app-dot-transform
