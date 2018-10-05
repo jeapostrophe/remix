@@ -139,5 +139,46 @@ to do.}
 
 The core syntax of @rmx is provided in this module.
 
-XXX
+XXX stx gen:def-transformer
+XXX stx def-transformer?
+XXX stx def-transform
+XXX def
 
+XXX stx gen:def*-transformer
+XXX stx def*-transformer?
+XXX stx def*-transform
+XXX def*
+XXX remix-block
+XXX #%brackets
+
+XXX gen:binary-operator
+XXX binary-operator?
+XXX binary-operator-precedence
+XXX #%braces
+
+XXX gen:dot-transformer
+XXX dot-transformer?
+XXX dot-transform?
+XXX dot-ref
+XXX #%dot
+
+XXX gen:app-dot-transformer
+XXX app-dot-transformer?
+XXX app-dot-transform
+XXX #%app
+
+XXX #%rest
+XXX lambda
+
+XXX $
+XXX remix-cut
+
+XXX impossible!
+XXX cond
+
+XXX lang
+XXX lang*
+
+XXX val
+XXX stx
+XXX mac

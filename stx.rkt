@@ -11,6 +11,8 @@
          remix/stx/singleton-struct
          racket/stxparam)
 
+;; xxx def+
+
 (begin-for-syntax
   (define-generics def-transformer
     (def-transform def-transformer stx)))
@@ -19,9 +21,6 @@
     #:literals (#%brackets)
     [(_ (#%brackets dt . _) . _)
      #:declare dt (static def-transformer? "def transformer")
-     ;; xxx maybe this interface should be thicker, because right now
-     ;; it can expand to anything at all. thicker would mean more
-     ;; composable.
      (def-transform (attribute dt.value) stx)]
     ;; xxx test this
     [(_ dt . body)
@@ -49,6 +48,7 @@
   (define-syntax (def*-internal stx)
     (syntax-parse stx
       #:literals (#%brackets)
+      ;; XXX allow normal def transformer?
       ;; xxx test this
       [(_ (#%brackets dt . _) _)
        #:declare dt (static def*-transformer? "def* transformer")
@@ -91,7 +91,8 @@
   (provide def*
            #%brackets
            (for-syntax def*-transformer?
-                       gen:def*-transformer)
+                       gen:def*-transformer
+                       def*-transform)
            remix-block))
 (require (submod "." remix-block)
          (for-syntax (submod "." remix-block)))
@@ -171,17 +172,6 @@
       empty
       empty)]))
 
-(define-syntax (block-#%braces stx)
-  (syntax-parse stx
-    [(_ s ...)
-     (syntax-case #'(s ...) ()
-       [()
-        (syntax/loc stx
-          (the-#%braces s ...))]
-       [(sf ...)
-        (syntax/loc stx
-          (remix-block sf ... (the-#%braces s ...)))])]))
-
 (require (for-syntax (prefix-in dangerous:stxparamkey: racket/private/stxparamkey)))
 (begin-for-syntax
   (define (syntax-parameter? id)
@@ -209,7 +199,16 @@
     [(_ dt . _)
      ;; dt is an identifier with a syntax binding to a dot transformer
      #:declare dt (static dot-transformer? "dot transformer")
-     (dot-transform (attribute dt.value) stx)]))
+     (dot-transform (attribute dt.value) stx)]
+    [(_ a bs ...)
+     (for/fold ([obj #'a]) ([b (in-list (syntax->list #'(bs ...)))])
+       (quasisyntax/loc stx
+         ;; XXX Do we always want to quasiquote? Or use something like
+         ;; () or [] to mean eval?
+         (dot-ref #,obj `#,b)))]))
+
+(define-generics dynamic-dot-map
+  (dot-ref dynamic-dot-map key))
 
 ;; XXX This should work differently... add a method to dot-transformer
 ;; that has a sensible default and let it pass out a def block to put
@@ -392,8 +391,10 @@
 (provide def def*
          (for-syntax gen:def-transformer
                      def-transformer?
+                     def-transform
                      gen:def*-transformer
-                     def*-transformer?)
+                     def*-transformer?
+                     def*-transform)
          (rename-out [def ≙] ;; \defs
                      [def :=]
                      [def* ≙*]
@@ -443,7 +444,7 @@
    [(define (def-transform _ stx)
       (syntax-parse stx
         #:literals (#%brackets)
-        [(_def (#%brackets _stx x:id) . body)
+        [(_def (#%brackets _val x:id) . body)
          (syntax/loc stx
            (define x (remix-block . body)))]))]))
 
