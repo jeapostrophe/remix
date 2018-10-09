@@ -6,6 +6,7 @@
                      racket/syntax
                      syntax/parse)
          remix/module
+         racket/generic
          syntax/quote
          syntax/parse/define
          remix/stx/singleton-struct
