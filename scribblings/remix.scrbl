@@ -93,7 +93,7 @@ m) after ...)] expands to @racket[(#%module-begin before ... (rkt:require
 m) (#%require*d after ...))] where @racket[#%require*d] is provided by
 @racket[m].
 
-This allows gives the required module control over the expansion of
+This allows the required module control over the expansion of
 the remainder of the requiring module.}
 
 @section[#:tag "stdlibmores"]{Standard Library Mores}
