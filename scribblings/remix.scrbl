@@ -98,6 +98,8 @@ the remainder of the requiring module.}
 
 @section[#:tag "stdlibmores"]{Standard Library Mores}
 
+XXX opposite?
+
 A @rmx module @racket[_m] should contain submodules for each version
 of its interface. For example, if @racket[remix/list] had two
 versions, then it would have a @racket[(submod remix/list 0)] and
